@@ -115,7 +115,7 @@ def validate_plugin_file(filepath, seen_ids):
         return False
 
     if not re.match(r"^[a-z0-9]+(\.[a-z0-9]+)+$", plugin_id):
-        print(f"Error: plugin_id '{plugin_id}' must be in reverse-DNS format (e.g., com.example.tool)")
+        print(f"Error: plugin_id '{plugin_id}' must be in dot-separated format (e.g., osaurus.time)")
         return False
 
     # Unique Constraint: Ensure no duplicate plugin_ids (case-insensitive)
@@ -128,6 +128,11 @@ def validate_plugin_file(filepath, seen_ids):
     if not isinstance(data["versions"], list):
         print(f"Error: 'versions' must be a list in {filepath}")
         return False
+
+    # Empty versions array is allowed for unreleased plugins
+    if len(data["versions"]) == 0:
+        print(f"  Note: No versions published yet for {plugin_id}")
+        return True
 
     valid = True
     for idx, version_entry in enumerate(data["versions"]):

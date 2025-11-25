@@ -1,0 +1,21 @@
+{
+  "plugin_id": "osaurus.time",
+  "name": "Osaurus Time",
+  "description": "Time and date utilities for Osaurus",
+  "homepage": "https://github.com/dinoki-ai/osaurus-tools",
+  "license": "MIT",
+  "authors": ["Osaurus Team"],
+  "capabilities": {
+    "tools": [
+      {
+        "name": "current_time",
+        "description": "Get the current date and time, optionally in a specific timezone"
+      },
+      {
+        "name": "format_date",
+        "description": "Format a timestamp or date string into a specified format"
+      }
+    ]
+  },
+  "versions": []
+}

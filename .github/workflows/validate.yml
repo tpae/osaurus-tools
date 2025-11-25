@@ -1,21 +1,50 @@
-name: Validate Plugin Specs
+name: Validate Plugins
 
 on:
   push:
-    branches: ["master", "main"]
+    branches: [master, main]
+    paths:
+      - 'plugins/**'
+      - 'scripts/validate.py'
   pull_request:
-    branches: ["master", "main"]
+    branches: [master, main]
+    paths:
+      - 'plugins/**'
+      - 'scripts/validate.py'
 
 jobs:
   validate:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.11'
 
-      - name: Run validation script
-        run: python3 scripts/validate.py
+      - name: Validate plugin manifests
+        run: python scripts/validate.py
+
+  build-check:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build all plugins
+        run: |
+          for tool in time git browser fetch search; do
+            echo "Building $tool..."
+            cd tools/$tool
+            swift build -c release
+            cd ../..
+          done

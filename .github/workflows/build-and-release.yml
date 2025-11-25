@@ -1,0 +1,257 @@
+name: Build and Release Plugin
+
+on:
+  push:
+    tags:
+      # Match tags like: time-1.0.0, git-1.0.0
+      - "*-*.*.*"
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: "Tool to build (time, git, browser, fetch, search, all)"
+        required: true
+        type: choice
+        options:
+          - time
+          - git
+          - browser
+          - fetch
+          - search
+          - all
+      version:
+        description: "Version (e.g., 1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    outputs:
+      plugin_id: ${{ steps.build.outputs.plugin_id }}
+      version: ${{ steps.build.outputs.version }}
+      artifact_name: ${{ steps.build.outputs.artifact_name }}
+      sha256: ${{ steps.build.outputs.sha256 }}
+      size: ${{ steps.build.outputs.size }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse tag or inputs
+        id: parse
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TOOL="${{ github.event.inputs.tool }}"
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # Parse from tag: tool-version (e.g., time-1.0.0)
+            TAG="${GITHUB_REF#refs/tags/}"
+            TOOL="${TAG%%-*}"
+            VERSION="${TAG#*-}"
+          fi
+          echo "tool=$TOOL" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building $TOOL version $VERSION"
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build plugin
+        id: build
+        run: |
+          TOOL="${{ steps.parse.outputs.tool }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+
+          ./scripts/build-tool.sh "$TOOL" --version "$VERSION"
+
+          # Read build info
+          BUILD_INFO="build/$TOOL/build-info.json"
+
+          PLUGIN_ID=$(python3 -c "import json; print(json.load(open('$BUILD_INFO'))['plugin_id'])")
+          ARTIFACT=$(python3 -c "import json; print(json.load(open('$BUILD_INFO'))['artifact'])")
+          SHA256=$(python3 -c "import json; print(json.load(open('$BUILD_INFO'))['sha256'])")
+          SIZE=$(python3 -c "import json; print(json.load(open('$BUILD_INFO'))['size'])")
+
+          echo "plugin_id=$PLUGIN_ID" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "artifact_name=$ARTIFACT" >> $GITHUB_OUTPUT
+          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          echo "size=$SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.artifact_name }}
+          path: build/${{ steps.parse.outputs.tool }}/${{ steps.build.outputs.artifact_name }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact_name }}
+          path: ./release
+
+      - name: Parse tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TOOL="${{ github.event.inputs.tool }}"
+            VERSION="${{ github.event.inputs.version }}"
+            TAG="${TOOL}-${VERSION}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+            TOOL="${TAG%%-*}"
+            VERSION="${TAG#*-}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "tool=$TOOL" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "${{ needs.build.outputs.plugin_id }} v${{ needs.build.outputs.version }}"
+          body: |
+            ## ${{ needs.build.outputs.plugin_id }} v${{ needs.build.outputs.version }}
+
+            ### Installation
+
+            ```bash
+            osaurus tools install ${{ needs.build.outputs.plugin_id }}
+            ```
+
+            ### Artifact Details
+
+            - **File:** `${{ needs.build.outputs.artifact_name }}`
+            - **SHA256:** `${{ needs.build.outputs.sha256 }}`
+            - **Size:** ${{ needs.build.outputs.size }} bytes
+
+            ### Manual Installation
+
+            Download the zip file and extract to your Osaurus tools directory.
+          files: ./release/${{ needs.build.outputs.artifact_name }}
+          fail_on_unmatched_files: true
+          generate_release_notes: false
+
+  update-registry:
+    needs: [build, release]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Parse tag
+        id: tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          TOOL="${TAG%%-*}"
+          echo "tool=$TOOL" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Update plugin registry JSON
+        run: |
+          PLUGIN_ID="${{ needs.build.outputs.plugin_id }}"
+          VERSION="${{ needs.build.outputs.version }}"
+          ARTIFACT="${{ needs.build.outputs.artifact_name }}"
+          SHA256="${{ needs.build.outputs.sha256 }}"
+          SIZE="${{ needs.build.outputs.size }}"
+          TAG="${{ steps.tag.outputs.tag }}"
+
+          REGISTRY_FILE="plugins/${PLUGIN_ID}.json"
+
+          # Download URL for the release artifact
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/${ARTIFACT}"
+
+          python3 << EOF
+          import json
+          from datetime import datetime
+
+          plugin_id = "$PLUGIN_ID"
+          version = "$VERSION"
+          sha256 = "$SHA256"
+          size = int("$SIZE")
+          url = "$DOWNLOAD_URL"
+          registry_file = "$REGISTRY_FILE"
+
+          # Load existing registry or create new
+          try:
+              with open(registry_file, 'r') as f:
+                  data = json.load(f)
+          except FileNotFoundError:
+              data = {
+                  "plugin_id": plugin_id,
+                  "versions": []
+              }
+
+          # Check if version already exists
+          existing_idx = None
+          for i, v in enumerate(data.get("versions", [])):
+              if v.get("version") == version:
+                  existing_idx = i
+                  break
+
+          new_version = {
+              "version": version,
+              "release_date": datetime.utcnow().strftime("%Y-%m-%d"),
+              "artifacts": [
+                  {
+                      "os": "macos",
+                      "arch": "arm64",
+                      "url": url,
+                      "sha256": sha256,
+                      "size": size
+                  }
+              ]
+          }
+
+          if existing_idx is not None:
+              data["versions"][existing_idx] = new_version
+          else:
+              data["versions"].insert(0, new_version)
+
+          with open(registry_file, 'w') as f:
+              json.dump(data, f, indent=2)
+
+          print(f"Updated {registry_file} with version {version}")
+          EOF
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update ${{ needs.build.outputs.plugin_id }} to v${{ needs.build.outputs.version }}"
+          title: "Update ${{ needs.build.outputs.plugin_id }} to v${{ needs.build.outputs.version }}"
+          body: |
+            Automated PR to update the plugin registry after release.
+
+            - **Plugin:** ${{ needs.build.outputs.plugin_id }}
+            - **Version:** ${{ needs.build.outputs.version }}
+            - **SHA256:** `${{ needs.build.outputs.sha256 }}`
+          branch: "release/${{ steps.tag.outputs.tag }}"
+          delete-branch: true

@@ -1,0 +1,25 @@
+{
+  "plugin_id": "osaurus.search",
+  "name": "Osaurus Search",
+  "description": "Web search using DuckDuckGo (no API key required)",
+  "homepage": "https://github.com/dinoki-ai/osaurus-tools",
+  "license": "MIT",
+  "authors": ["Osaurus Team"],
+  "capabilities": {
+    "tools": [
+      {
+        "name": "search",
+        "description": "Search the web using DuckDuckGo"
+      },
+      {
+        "name": "search_news",
+        "description": "Search for news articles using DuckDuckGo"
+      },
+      {
+        "name": "search_images",
+        "description": "Search for images using DuckDuckGo"
+      }
+    ]
+  },
+  "versions": []
+}

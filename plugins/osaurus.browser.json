@@ -1,0 +1,57 @@
+{
+  "plugin_id": "osaurus.browser",
+  "name": "Osaurus Browser",
+  "description": "Headless browser automation using WebKit WebView",
+  "homepage": "https://github.com/dinoki-ai/osaurus-tools",
+  "license": "MIT",
+  "authors": ["Osaurus Team"],
+  "capabilities": {
+    "tools": [
+      {
+        "name": "browser_navigate",
+        "description": "Navigate to a URL and wait for the page to load"
+      },
+      {
+        "name": "browser_get_content",
+        "description": "Get the text content of the page or a specific element"
+      },
+      {
+        "name": "browser_get_html",
+        "description": "Get the HTML of the page or a specific element"
+      },
+      {
+        "name": "browser_execute_script",
+        "description": "Execute JavaScript in the current page"
+      },
+      {
+        "name": "browser_click",
+        "description": "Click an element on the page"
+      },
+      {
+        "name": "browser_type",
+        "description": "Type text into an input element"
+      },
+      {
+        "name": "browser_select",
+        "description": "Select an option from a dropdown"
+      },
+      {
+        "name": "browser_screenshot",
+        "description": "Take a screenshot of the current page"
+      },
+      {
+        "name": "browser_get_url",
+        "description": "Get the current page URL"
+      },
+      {
+        "name": "browser_get_title",
+        "description": "Get the current page title"
+      },
+      {
+        "name": "browser_wait",
+        "description": "Wait for an element to appear"
+      }
+    ]
+  },
+  "versions": []
+}

@@ -1,0 +1,29 @@
+{
+  "plugin_id": "osaurus.git",
+  "name": "Osaurus Git",
+  "description": "Git repository utilities for Osaurus",
+  "homepage": "https://github.com/dinoki-ai/osaurus-tools",
+  "license": "MIT",
+  "authors": ["Osaurus Team"],
+  "capabilities": {
+    "tools": [
+      {
+        "name": "git_status",
+        "description": "Get the current status of a git repository"
+      },
+      {
+        "name": "git_log",
+        "description": "Get the commit history of a git repository"
+      },
+      {
+        "name": "git_diff",
+        "description": "Show changes between commits, commit and working tree, etc."
+      },
+      {
+        "name": "git_branch",
+        "description": "List branches or get the current branch name"
+      }
+    ]
+  },
+  "versions": []
+}
