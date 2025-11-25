@@ -36,6 +36,7 @@ jobs:
       artifact_name: ${{ steps.build.outputs.artifact_name }}
       sha256: ${{ steps.build.outputs.sha256 }}
       size: ${{ steps.build.outputs.size }}
+      minisign_signature: ${{ steps.sign.outputs.minisign_signature }}
 
     steps:
       - name: Checkout code
@@ -86,12 +87,45 @@ jobs:
           echo "sha256=$SHA256" >> $GITHUB_OUTPUT
           echo "size=$SIZE" >> $GITHUB_OUTPUT
 
+      - name: Sign with Minisign
+        id: sign
+        if: ${{ secrets.MINISIGN_SECRET_KEY != '' }}
+        env:
+          MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
+        run: |
+          TOOL="${{ steps.parse.outputs.tool }}"
+          ARTIFACT="${{ steps.build.outputs.artifact_name }}"
+
+          # Install minisign
+          brew install minisign
+
+          # Write secret key to temp file
+          echo "$MINISIGN_SECRET_KEY" > $RUNNER_TEMP/minisign.key
+
+          # Sign the zip
+          cd "build/$TOOL"
+          if [ -n "$MINISIGN_PASSWORD" ]; then
+            echo "$MINISIGN_PASSWORD" | minisign -S -s $RUNNER_TEMP/minisign.key -m "$ARTIFACT" -x "${ARTIFACT}.minisig"
+          else
+            minisign -S -s $RUNNER_TEMP/minisign.key -m "$ARTIFACT" -x "${ARTIFACT}.minisig" -W
+          fi
+
+          # Read signature for output
+          SIGNATURE=$(cat "${ARTIFACT}.minisig" | grep -v "^untrusted" | tr -d '\n')
+          echo "minisign_signature=$SIGNATURE" >> $GITHUB_OUTPUT
+
+          # Clean up
+          rm -f $RUNNER_TEMP/minisign.key
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build.outputs.artifact_name }}
-          path: build/${{ steps.parse.outputs.tool }}/${{ steps.build.outputs.artifact_name }}
-          if-no-files-found: error
+          path: |
+            build/${{ steps.parse.outputs.tool }}/${{ steps.build.outputs.artifact_name }}
+            build/${{ steps.parse.outputs.tool }}/${{ steps.build.outputs.artifact_name }}.minisig
+          if-no-files-found: warn
 
   release:
     needs: build
@@ -143,12 +177,15 @@ jobs:
             - **File:** `${{ needs.build.outputs.artifact_name }}`
             - **SHA256:** `${{ needs.build.outputs.sha256 }}`
             - **Size:** ${{ needs.build.outputs.size }} bytes
+            - **Signed:** ${{ needs.build.outputs.minisign_signature != '' && 'Yes (Minisign)' || 'No' }}
 
             ### Manual Installation
 
             Download the zip file and extract to your Osaurus tools directory.
-          files: ./release/${{ needs.build.outputs.artifact_name }}
-          fail_on_unmatched_files: true
+          files: |
+            ./release/${{ needs.build.outputs.artifact_name }}
+            ./release/${{ needs.build.outputs.artifact_name }}.minisig
+          fail_on_unmatched_files: false
           generate_release_notes: false
 
   update-registry:
@@ -175,6 +212,8 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Update plugin registry JSON
+        env:
+          MINISIGN_PUBLIC_KEY: ${{ secrets.MINISIGN_PUBLIC_KEY }}
         run: |
           PLUGIN_ID="${{ needs.build.outputs.plugin_id }}"
           VERSION="${{ needs.build.outputs.version }}"
@@ -182,6 +221,7 @@ jobs:
           SHA256="${{ needs.build.outputs.sha256 }}"
           SIZE="${{ needs.build.outputs.size }}"
           TAG="${{ steps.tag.outputs.tag }}"
+          MINISIGN_SIG="${{ needs.build.outputs.minisign_signature }}"
 
           REGISTRY_FILE="plugins/${PLUGIN_ID}.json"
 
@@ -190,6 +230,7 @@ jobs:
 
           python3 << EOF
           import json
+          import os
           from datetime import datetime
 
           plugin_id = "$PLUGIN_ID"
@@ -198,6 +239,8 @@ jobs:
           size = int("$SIZE")
           url = "$DOWNLOAD_URL"
           registry_file = "$REGISTRY_FILE"
+          minisign_sig = "$MINISIGN_SIG"
+          minisign_public_key = os.environ.get("MINISIGN_PUBLIC_KEY", "")
 
           # Load existing registry or create new
           try:
@@ -209,6 +252,10 @@ jobs:
                   "versions": []
               }
 
+          # Add public key if available and not already present
+          if minisign_public_key and "public_keys" not in data:
+              data["public_keys"] = {"minisign": minisign_public_key}
+
           # Check if version already exists
           existing_idx = None
           for i, v in enumerate(data.get("versions", [])):
@@ -216,18 +263,24 @@ jobs:
                   existing_idx = i
                   break
 
+          artifact = {
+              "os": "macos",
+              "arch": "arm64",
+              "url": url,
+              "sha256": sha256,
+              "size": size
+          }
+
+          # Add minisign signature if available
+          if minisign_sig:
+              artifact["minisign"] = {
+                  "signature": minisign_sig
+              }
+
           new_version = {
               "version": version,
               "release_date": datetime.utcnow().strftime("%Y-%m-%d"),
-              "artifacts": [
-                  {
-                      "os": "macos",
-                      "arch": "arm64",
-                      "url": url,
-                      "sha256": sha256,
-                      "size": size
-                  }
-              ]
+              "artifacts": [artifact]
           }
 
           if existing_idx is not None:
@@ -239,12 +292,14 @@ jobs:
               json.dump(data, f, indent=2)
 
           print(f"Updated {registry_file} with version {version}")
+          if minisign_sig:
+              print("Minisign signature included")
           EOF
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_PAT }}
           commit-message: "chore: update ${{ needs.build.outputs.plugin_id }} to v${{ needs.build.outputs.version }}"
           title: "Update ${{ needs.build.outputs.plugin_id }} to v${{ needs.build.outputs.version }}"
           body: |
