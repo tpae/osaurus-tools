@@ -11,11 +11,16 @@
 #   ./scripts/build-tool.sh git --version 1.0.0
 #   ./scripts/build-tool.sh all
 #
+# Environment Variables:
+#   CODESIGN_IDENTITY    Signing identity for codesign (e.g., "Developer ID Application: Company (TEAMID)")
+#                        If not set, ad-hoc signing is used.
+#
 # This script:
 # 1. Builds the Swift plugin as a dynamic library
-# 2. Packages the .dylib and manifest.json into a zip
-# 3. Computes SHA256 checksum
-# 4. Outputs build artifacts to build/<tool-name>/
+# 2. Code signs the dylib (Developer ID if CODESIGN_IDENTITY is set, ad-hoc otherwise)
+# 3. Packages the .dylib and manifest.json into a zip
+# 4. Computes SHA256 checksum
+# 5. Outputs build artifacts to build/<tool-name>/
 #
 
 set -euo pipefail
@@ -148,10 +153,17 @@ build_tool() {
     cp "$dylib_path" "$staging_dir/lib${product_name}.dylib"
     cp "$tool_dir/manifest.json" "$staging_dir/manifest.json"
 
-    # Ad-hoc codesign the dylib (satisfies macOS Gatekeeper requirements)
-    print_info "Ad-hoc signing dylib..."
-    codesign -s - -f "$staging_dir/lib${product_name}.dylib"
-    print_success "Signed: lib${product_name}.dylib"
+    # Code sign the dylib
+    local dylib_file="$staging_dir/lib${product_name}.dylib"
+    if [ -n "${CODESIGN_IDENTITY:-}" ]; then
+        print_info "Signing dylib with Developer ID..."
+        codesign --force --options runtime --timestamp --sign "$CODESIGN_IDENTITY" "$dylib_file"
+        print_success "Signed with Developer ID: lib${product_name}.dylib"
+    else
+        print_info "Ad-hoc signing dylib (no CODESIGN_IDENTITY set)..."
+        codesign -s - -f "$dylib_file"
+        print_success "Ad-hoc signed: lib${product_name}.dylib"
+    fi
 
     # Create the zip archive
     local zip_name="${plugin_id}-${version}.zip"
