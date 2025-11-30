@@ -4,33 +4,47 @@ on:
   push:
     branches: [master, main]
     paths:
-      - 'plugins/**'
-      - 'scripts/validate.py'
+      - "plugins/**"
+      - "scripts/validate.py"
   pull_request:
     branches: [master, main]
     paths:
-      - 'plugins/**'
-      - 'scripts/validate.py'
+      - "plugins/**"
+      - "scripts/validate.py"
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for base branch comparison
+
+      - name: Fetch base branch
+        if: github.event_name == 'pull_request'
+        run: git fetch origin ${{ github.base_ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
+
+      - name: Install minisign
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y minisign
 
       - name: Validate plugin manifests
+        env:
+          VERIFY_SIGNATURES: "true"
+          GITHUB_BASE_REF: ${{ github.base_ref }}
         run: python scripts/validate.py
 
   build-check:
     runs-on: macos-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
