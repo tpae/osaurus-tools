@@ -1,10 +1,8 @@
 # Osaurus Tools Repository
 
-This repository serves as the central registry for community tools and plugins for [Osaurus](https://github.com/dinoki-ai/osaurus).
+Central registry for community tools and plugins for [Osaurus](https://github.com/dinoki-ai/osaurus).
 
 ## Official System Tools
-
-These tools are maintained by the Osaurus team and built directly from this repository:
 
 | Plugin ID            | Description                        | Tools                                                                                                                                                          |
 | -------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -18,7 +16,6 @@ These tools are maintained by the Osaurus team and built directly from this repo
 ### Installation
 
 ```bash
-# Install via Osaurus CLI
 osaurus tools install osaurus.time
 osaurus tools install osaurus.git
 osaurus tools install osaurus.browser
@@ -27,16 +24,16 @@ osaurus tools install osaurus.search
 osaurus tools install osaurus.filesystem
 ```
 
-## How to Add a Tool
+## Adding a Plugin to the Registry
 
-1.  **Fork this repository.**
-2.  Create a new JSON file in the `plugins/` directory. The filename should match your plugin ID (e.g., `mycompany.mytool.json`).
-3.  Fill in the plugin specification according to the schema below.
-4.  **Submit a Pull Request.** Our CI will automatically validate your JSON file.
+1. Fork this repository
+2. Create `plugins/<your.plugin.id>.json` (e.g., `mycompany.mytool.json`)
+3. Fill in the plugin specification (see schema below)
+4. Submit a Pull Request — CI will validate your JSON automatically
 
-## Plugin Specification Schema
+## Plugin Specification
 
-Your JSON file must adhere to the following structure:
+Plugins are distributed as a `.dylib` plus `manifest.json` in a zip file.
 
 ```json
 {
@@ -53,6 +50,9 @@ Your JSON file must adhere to the following structure:
       }
     ]
   },
+  "public_keys": {
+    "minisign": "RWxxxxxxxxxxxxxxxx"
+  },
   "versions": [
     {
       "version": "1.0.0",
@@ -66,7 +66,11 @@ Your JSON file must adhere to the following structure:
           "os": "macos",
           "arch": "arm64",
           "url": "https://example.com/downloads/mytool-1.0.0.zip",
-          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "minisign": {
+            "signature": "RWxxxxxxxxxxxxxxxx",
+            "key_id": "xxxxxxxx"
+          }
         }
       ]
     }
@@ -74,45 +78,79 @@ Your JSON file must adhere to the following structure:
 }
 ```
 
-### Fields
+### Required Fields
 
-- **`plugin_id`** (Required): A unique identifier for your plugin in dot-separated format (e.g., `mycompany.mytool`).
-- **`name`** (Required): Display name of the plugin.
-- **`homepage`** (Optional): URL to the plugin's homepage or repository.
-- **`license`** (Optional): License of the plugin (e.g., "MIT", "Apache-2.0").
-- **`authors`** (Optional): List of author names.
-- **`capabilities`** (Optional): Structural capabilities description (e.g., tools).
-- **`public_keys`** (Required): Dictionary of public keys for signature verification (Using Minisign).
-- **`versions`** (Required): List of available versions.
+| Field         | Description                                                          |
+| ------------- | -------------------------------------------------------------------- |
+| `plugin_id`   | Unique identifier in dot-separated format (e.g., `mycompany.mytool`) |
+| `name`        | Display name                                                         |
+| `public_keys` | Dictionary of public keys for signature verification                 |
+| `versions`    | List of available versions                                           |
+
+### Optional Fields
+
+| Field          | Description                         |
+| -------------- | ----------------------------------- |
+| `homepage`     | Plugin homepage or repository URL   |
+| `license`      | License (e.g., "MIT", "Apache-2.0") |
+| `authors`      | List of author names                |
+| `capabilities` | Tools and capabilities description  |
 
 ### Version Entry
 
-- **`version`** (Required): Semantic version string (e.g., "1.0.0").
-- **`release_date`** (Optional): Date string (ISO 8601 preferred).
-- **`notes`** (Optional): Release notes.
-- **`requires`** (Optional): System requirements.
-  - `osaurus_min_version`: Minimum Osaurus version required.
-- **`artifacts`** (Required): List of downloadable binaries.
+| Field                          | Required | Description                      |
+| ------------------------------ | -------- | -------------------------------- |
+| `version`                      | Yes      | Semantic version (e.g., "1.0.0") |
+| `artifacts`                    | Yes      | List of downloadable binaries    |
+| `release_date`                 | No       | Date string (ISO 8601)           |
+| `notes`                        | No       | Release notes                    |
+| `requires.osaurus_min_version` | No       | Minimum Osaurus version          |
 
-### Artifact
+### Artifact Entry
 
-- **`os`** (Required): Operating system (currently supports `macos`).
-- **`arch`** (Required): CPU architecture (currently supports `arm64`).
-- **`min_macos`** (Optional): Minimum macOS version required (e.g., "13.0").
-- **`url`** (Required): Direct download URL for the plugin binary/archive.
-- **`sha256`** (Required): SHA-256 checksum of the file at `url`.
-- **`size`** (Optional): File size in bytes.
-- **`minisign`** (Required): Minisign signature information.
-  - `signature`: The signature string.
-  - `key_id`: The key ID used to sign.
+| Field       | Required | Description                                   |
+| ----------- | -------- | --------------------------------------------- |
+| `os`        | Yes      | Operating system (`macos`)                    |
+| `arch`      | Yes      | CPU architecture (`arm64`)                    |
+| `url`       | Yes      | Direct download URL for the zip               |
+| `sha256`    | Yes      | SHA-256 checksum                              |
+| `minisign`  | Yes      | Minisign signature (`signature` and `key_id`) |
+| `min_macos` | No       | Minimum macOS version (e.g., "13.0")          |
+| `size`      | No       | File size in bytes                            |
 
----
+## Code Signing
+
+macOS plugins (`.dylib`) **must be code-signed** with a valid Developer ID Application certificate. Unsigned plugins will be blocked by Gatekeeper when downloaded.
+
+```bash
+codesign --force --options runtime --timestamp \
+  --sign "Developer ID Application: Your Name (TEAMID)" \
+  libMyPlugin.dylib
+```
+
+## Artifact Signing (Minisign)
+
+Sign your release zip to ensure integrity:
+
+```bash
+# Install Minisign
+brew install minisign
+
+# Generate key pair (once)
+minisign -G -p minisign.pub -s minisign.key
+
+# Sign your zip
+minisign -S -s minisign.key -m myplugin-macos-arm64.zip
+```
+
+Add to your plugin spec:
+
+- Public key contents → `public_keys.minisign`
+- Signature contents → `versions[].artifacts[].minisign.signature`
 
 ## Development
 
 ### Building System Tools
-
-The `tools/` directory contains source code for official Osaurus system tools.
 
 ```bash
 # Build a single tool
@@ -125,22 +163,23 @@ The `tools/` directory contains source code for official Osaurus system tools.
 ./scripts/build-tool.sh git --version 1.0.0
 ```
 
-Build artifacts are output to `build/<tool-name>/`.
+Build output goes to `build/<tool-name>/`.
 
-### Creating a New System Tool
+### Creating a New Tool
 
-1. Create a new directory under `tools/`:
+1. Create directory structure:
 
    ```
    tools/mytool/
    ├── Package.swift
    ├── manifest.json
-   └── Sources/Plugin/Plugin.swift
+   └── Sources/OsaurusMytool/Plugin.swift
    ```
 
-2. Implement the plugin following the C ABI specification (see existing tools for examples).
+2. Implement the plugin using the [C ABI](https://github.com/dinoki-ai/osaurus/blob/main/docs/PLUGIN_AUTHORING.md). See existing tools for examples.
 
-3. Build and test locally:
+3. Build and test:
+
    ```bash
    ./scripts/build-tool.sh mytool
    osaurus tools install ./build/mytool/osaurus.mytool-1.0.0.zip
@@ -148,30 +187,25 @@ Build artifacts are output to `build/<tool-name>/`.
 
 ### Releasing
 
-Use the release script to create tags, then push to trigger GitHub Actions:
-
 ```bash
-# Release a single tool (uses version from manifest.json)
+# Release a single tool
 ./scripts/release.sh time
 git push origin time-1.0.0
 
-# Release all tools at once
+# Release all tools
 ./scripts/release.sh all
 git push origin --tags
 
 # Release with explicit version
 ./scripts/release.sh time 1.0.0
-./scripts/release.sh all 1.0.0
 ```
 
-The workflow will:
+The GitHub Actions workflow will:
 
 1. Build the plugin for macOS arm64
 2. Create a GitHub Release with the artifact
-3. Open a PR to update the registry JSON with the new version
-
----
+3. Open a PR to update the registry JSON
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE) for details.
