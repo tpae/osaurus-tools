@@ -162,7 +162,7 @@ private var api: osr_plugin_api = {
             {
               "plugin_id": "osaurus.time",
               "version": "1.0.0",
-              "description": "Time and date utilities for Osaurus",
+              "description": "Get current time and format dates across timezones",
               "capabilities": {
                 "tools": [
                   {

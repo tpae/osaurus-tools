@@ -495,17 +495,17 @@ private var api: osr_plugin_api = {
             {
               "plugin_id": "osaurus.filesystem",
               "version": "1.0.0",
-              "description": "Secure file system operations for reading, writing, and managing files and directories",
+              "description": "Full access to the local file system for reading, writing, and managing files and directories",
               "capabilities": {
                 "tools": [
-                  {"id": "read_file", "description": "Read the contents of a file", "parameters": {"type":"object","properties":{"path":{"type":"string"},"encoding":{"type":"string"}},"required":["path"]}, "requirements": [], "permission_policy": "ask"},
-                  {"id": "write_file", "description": "Write content to a file", "parameters": {"type":"object","properties":{"path":{"type":"string"},"content":{"type":"string"},"create_dirs":{"type":"boolean"}},"required":["path","content"]}, "requirements": [], "permission_policy": "ask"},
-                  {"id": "list_directory", "description": "List directory contents", "parameters": {"type":"object","properties":{"path":{"type":"string"},"recursive":{"type":"boolean"}},"required":["path"]}, "requirements": [], "permission_policy": "ask"},
-                  {"id": "create_directory", "description": "Create a directory", "parameters": {"type":"object","properties":{"path":{"type":"string"},"recursive":{"type":"boolean"}},"required":["path"]}, "requirements": [], "permission_policy": "ask"},
-                  {"id": "delete_file", "description": "Delete a file or directory", "parameters": {"type":"object","properties":{"path":{"type":"string"},"recursive":{"type":"boolean"}},"required":["path"]}, "requirements": [], "permission_policy": "ask"},
-                  {"id": "move_file", "description": "Move or rename a file or directory", "parameters": {"type":"object","properties":{"source":{"type":"string"},"destination":{"type":"string"}},"required":["source","destination"]}, "requirements": [], "permission_policy": "ask"},
-                  {"id": "search_files", "description": "Search for files by glob pattern", "parameters": {"type":"object","properties":{"path":{"type":"string"},"pattern":{"type":"string"},"recursive":{"type":"boolean"}},"required":["path","pattern"]}, "requirements": [], "permission_policy": "ask"},
-                  {"id": "get_file_info", "description": "Get file metadata", "parameters": {"type":"object","properties":{"path":{"type":"string"}},"required":["path"]}, "requirements": [], "permission_policy": "ask"}
+                  {"id": "read_file", "description": "Read any file from the file system", "parameters": {"type":"object","properties":{"path":{"type":"string"},"encoding":{"type":"string"}},"required":["path"]}, "requirements": [], "permission_policy": "ask"},
+                  {"id": "write_file", "description": "Write to any file on the file system", "parameters": {"type":"object","properties":{"path":{"type":"string"},"content":{"type":"string"},"create_dirs":{"type":"boolean"}},"required":["path","content"]}, "requirements": [], "permission_policy": "ask"},
+                  {"id": "list_directory", "description": "List contents of any directory", "parameters": {"type":"object","properties":{"path":{"type":"string"},"recursive":{"type":"boolean"}},"required":["path"]}, "requirements": [], "permission_policy": "ask"},
+                  {"id": "create_directory", "description": "Create a directory at any path", "parameters": {"type":"object","properties":{"path":{"type":"string"},"recursive":{"type":"boolean"}},"required":["path"]}, "requirements": [], "permission_policy": "ask"},
+                  {"id": "delete_file", "description": "Delete any file or directory", "parameters": {"type":"object","properties":{"path":{"type":"string"},"recursive":{"type":"boolean"}},"required":["path"]}, "requirements": [], "permission_policy": "ask"},
+                  {"id": "move_file", "description": "Move or rename any file or directory", "parameters": {"type":"object","properties":{"source":{"type":"string"},"destination":{"type":"string"}},"required":["source","destination"]}, "requirements": [], "permission_policy": "ask"},
+                  {"id": "search_files", "description": "Search for files by glob pattern in any directory", "parameters": {"type":"object","properties":{"path":{"type":"string"},"pattern":{"type":"string"},"recursive":{"type":"boolean"}},"required":["path","pattern"]}, "requirements": [], "permission_policy": "ask"},
+                  {"id": "get_file_info", "description": "Get metadata for any file or directory", "parameters": {"type":"object","properties":{"path":{"type":"string"}},"required":["path"]}, "requirements": [], "permission_policy": "ask"}
                 ]
               }
             }

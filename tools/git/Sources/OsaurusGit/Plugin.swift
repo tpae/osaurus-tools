@@ -339,7 +339,7 @@ private var api: osr_plugin_api = {
             {
               "plugin_id": "osaurus.git",
               "version": "1.0.0",
-              "description": "Git repository utilities for Osaurus",
+              "description": "Read-only git operations: status, log, diff, and branch info",
               "capabilities": {
                 "tools": [
                   {
