@@ -302,8 +302,8 @@ def validate_plugin_file(filepath, seen_ids):
         print(f"Error: plugin_id '{plugin_id}' must be lower-case")
         return False
 
-    if not re.match(r"^[a-z0-9]+(\.[a-z0-9]+)+$", plugin_id):
-        print(f"Error: plugin_id '{plugin_id}' must be in dot-separated format (e.g., osaurus.time)")
+    if not re.match(r"^[a-z0-9]+(\.[a-z0-9_-]+)+$", plugin_id):
+        print(f"Error: plugin_id '{plugin_id}' must be in dot-separated format (e.g., osaurus.time, osaurus.macos-use)")
         return False
 
     # Unique Constraint: Ensure no duplicate plugin_ids (case-insensitive)
