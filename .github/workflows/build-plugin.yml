@@ -112,9 +112,13 @@ jobs:
 
           echo "plugin_id=$PLUGIN_ID" >> $GITHUB_OUTPUT
 
-          # Store compacted manifest (single line) to avoid control character issues
+          # Store compacted manifest using heredoc syntax to handle large outputs
           MANIFEST_COMPACT=$(echo "$MANIFEST" | jq -c .)
-          echo "manifest=$MANIFEST_COMPACT" >> $GITHUB_OUTPUT
+          {
+            echo "manifest<<EOF"
+            echo "$MANIFEST_COMPACT"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
           echo "Extracted plugin_id: $PLUGIN_ID"
           echo "Full manifest:"
