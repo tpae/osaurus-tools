@@ -10,8 +10,8 @@ name: Build Plugin (Reusable)
 # 4. Create a GitHub Release
 # 5. Submit a PR to the osaurus-tools registry
 #
-# Note: Some outputs are base64 encoded to prevent GitHub Actions from
-# blocking them due to secret substring matching.
+# Note: Data is passed between jobs via artifacts to avoid GitHub Actions
+# blocking outputs that contain secret substrings.
 
 on:
   workflow_call:
@@ -48,11 +48,7 @@ jobs:
     runs-on: ${{ inputs.macos_version }}
     outputs:
       version: ${{ steps.version.outputs.version }}
-      plugin_id_b64: ${{ steps.extract.outputs.plugin_id_b64 }}
-      manifest_b64: ${{ steps.extract.outputs.manifest_b64 }}
-      artifact_url_b64: ${{ steps.urls.outputs.artifact_url_b64 }}
       sha256: ${{ steps.package.outputs.sha256 }}
-      signature_b64: ${{ steps.sign.outputs.signature_b64 }}
 
     steps:
       - name: Checkout code
@@ -104,14 +100,12 @@ jobs:
             exit 1
           fi
 
-          # Write to temp files for reliable base64 encoding (matches signature_b64 approach)
-          echo -n "$PLUGIN_ID" > "$RUNNER_TEMP/plugin_id.txt"
-          echo "$MANIFEST" | jq -c . > "$RUNNER_TEMP/manifest.json"
+          # Save to files for artifact upload (avoids secret masking on job outputs)
+          mkdir -p build-data
+          echo -n "$PLUGIN_ID" > build-data/plugin_id.txt
+          echo "$MANIFEST" | jq -c . > build-data/manifest.json
 
           echo "plugin_id=$PLUGIN_ID" >> $GITHUB_OUTPUT
-          echo "plugin_id_b64=$(base64 -i "$RUNNER_TEMP/plugin_id.txt")" >> $GITHUB_OUTPUT
-          echo "manifest_b64=$(base64 -i "$RUNNER_TEMP/manifest.json" | tr -d '\n')" >> $GITHUB_OUTPUT
-
           echo "Extracted plugin_id: $PLUGIN_ID"
 
       - name: Code sign
@@ -161,7 +155,8 @@ jobs:
 
           echo "$MINISIGN_PASSWORD" | minisign -Slm "${{ steps.package.outputs.artifact }}" -s $RUNNER_TEMP/minisign.key
 
-          echo "signature_b64=$(base64 -i "${{ steps.package.outputs.artifact }}.minisig")" >> $GITHUB_OUTPUT
+          # Save signature to file for artifact upload
+          cp "${{ steps.package.outputs.artifact }}.minisig" build-data/signature.minisig
 
           rm -f $RUNNER_TEMP/minisign.key
 
@@ -174,31 +169,38 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: false
 
-      - name: Set artifact URL
-        id: urls
+      - name: Save artifact URL
         run: |
           ARTIFACT_URL="${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.package.outputs.artifact }}"
-          echo -n "$ARTIFACT_URL" > "$RUNNER_TEMP/artifact_url.txt"
-          echo "artifact_url_b64=$(base64 -i "$RUNNER_TEMP/artifact_url.txt")" >> $GITHUB_OUTPUT
+          echo -n "$ARTIFACT_URL" > build-data/artifact_url.txt
+
+      - name: Upload build data
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-data
+          path: build-data/
+          retention-days: 1
 
   registry-pr:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
+      - name: Download build data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-data
+          path: build-data/
+
       - name: Generate registry manifest
         env:
-          MANIFEST_B64: ${{ needs.build.outputs.manifest_b64 }}
-          PLUGIN_ID_B64: ${{ needs.build.outputs.plugin_id_b64 }}
-          ARTIFACT_URL_B64: ${{ needs.build.outputs.artifact_url_b64 }}
-          SIGNATURE_B64: ${{ needs.build.outputs.signature_b64 }}
+          MINISIGN_PUBLIC_KEY: ${{ secrets.MINISIGN_PUBLIC_KEY }}
         run: |
-          # Decode base64 encoded values
-          # Use tr -d '\n' to remove any potential newlines from decoding
-          PLUGIN_ID=$(echo "$PLUGIN_ID_B64" | base64 -d | tr -d '\n')
-          MANIFEST=$(echo "$MANIFEST_B64" | base64 -d)
-          ARTIFACT_URL=$(echo "$ARTIFACT_URL_B64" | base64 -d | tr -d '\n')
-          SIGNATURE=$(echo "$SIGNATURE_B64" | base64 -d | tr -d '\n')
+          # Read values from artifact files
+          PLUGIN_ID=$(cat build-data/plugin_id.txt)
+          MANIFEST=$(cat build-data/manifest.json)
+          ARTIFACT_URL=$(cat build-data/artifact_url.txt)
+          SIGNATURE=$(cat build-data/signature.minisig)
 
           NAME=$(echo "$MANIFEST" | jq -r '.name // empty')
           DESCRIPTION=$(echo "$MANIFEST" | jq -r '.description // ""')
@@ -221,7 +223,7 @@ jobs:
             --arg license "$LICENSE" \
             --argjson authors "$AUTHORS" \
             --argjson tools "$TOOLS" \
-            --arg minisign_pubkey "${{ secrets.MINISIGN_PUBLIC_KEY }}" \
+            --arg minisign_pubkey "$MINISIGN_PUBLIC_KEY" \
             --arg min_macos "$MIN_MACOS" \
             --arg min_osaurus "$MIN_OSAURUS" \
             --arg version "${{ needs.build.outputs.version }}" \
@@ -255,6 +257,9 @@ jobs:
 
           cat registry-manifest.json | jq .
 
+          # Save plugin_id for later steps
+          echo "$PLUGIN_ID" > plugin_id.txt
+
       - name: Upload manifest artifact
         uses: actions/upload-artifact@v4
         with:
@@ -264,9 +269,8 @@ jobs:
       - name: Create PR via fork
         env:
           GH_TOKEN: ${{ secrets.REGISTRY_PAT }}
-          PLUGIN_ID_B64: ${{ needs.build.outputs.plugin_id_b64 }}
         run: |
-          PLUGIN_ID=$(echo "$PLUGIN_ID_B64" | base64 -d)
+          PLUGIN_ID=$(cat plugin_id.txt)
           VERSION="${{ needs.build.outputs.version }}"
           OWNER="${{ github.repository_owner }}"
           BRANCH="plugin/${PLUGIN_ID}-${VERSION}"
