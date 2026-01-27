@@ -112,11 +112,9 @@ jobs:
 
           echo "plugin_id=$PLUGIN_ID" >> $GITHUB_OUTPUT
 
-          # Store full manifest
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "manifest<<$EOF" >> $GITHUB_OUTPUT
-          echo "$MANIFEST" >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
+          # Store compacted manifest (single line) to avoid control character issues
+          MANIFEST_COMPACT=$(echo "$MANIFEST" | jq -c .)
+          echo "manifest=$MANIFEST_COMPACT" >> $GITHUB_OUTPUT
 
           echo "Extracted plugin_id: $PLUGIN_ID"
           echo "Full manifest:"
@@ -201,8 +199,9 @@ jobs:
 
     steps:
       - name: Generate registry manifest
+        env:
+          MANIFEST: ${{ needs.build.outputs.manifest }}
         run: |
-          MANIFEST='${{ needs.build.outputs.manifest }}'
           PLUGIN_ID="${{ needs.build.outputs.plugin_id }}"
 
           # Extract fields with defaults
