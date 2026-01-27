@@ -166,8 +166,86 @@ Your plugin's `get_manifest()` function must return valid JSON with these fields
 | `authors`             | No       | Array of author names (defaults to repo owner)   |
 | `min_macos`           | No       | Minimum macOS version (defaults to `13.0`)       |
 | `min_osaurus`         | No       | Minimum Osaurus version (defaults to `0.5.0`)    |
+| `secrets`             | No       | Array of secret definitions for API keys/credentials |
 
 Note: Version is extracted from the Git tag (e.g., `v1.0.0` or `1.0.0`), not from the manifest.
+
+### Plugin Secrets
+
+Plugins that require API keys or other credentials can declare them in the manifest. Osaurus stores secrets securely in the macOS Keychain and prompts users to configure them during installation.
+
+**Declaring Secrets in Manifest:**
+
+```json
+{
+  "plugin_id": "myname.weather",
+  "description": "Weather forecasts",
+  "secrets": [
+    {
+      "id": "api_key",
+      "label": "OpenWeather API Key",
+      "description": "Get your API key from [OpenWeather](https://openweathermap.org/api)",
+      "required": true,
+      "url": "https://openweathermap.org/api"
+    },
+    {
+      "id": "backup_key",
+      "label": "Backup API Key",
+      "description": "Optional backup key for failover",
+      "required": false
+    }
+  ],
+  "capabilities": {
+    "tools": [...]
+  }
+}
+```
+
+**Secret Specification Fields:**
+
+| Field         | Type    | Required | Description                                              |
+| ------------- | ------- | -------- | -------------------------------------------------------- |
+| `id`          | string  | Yes      | Unique identifier for the secret (e.g., `"api_key"`)     |
+| `label`       | string  | Yes      | Human-readable label shown in the UI                     |
+| `description` | string  | No       | Rich text description (supports markdown links)          |
+| `required`    | boolean | Yes      | Whether the secret is required for the plugin to function|
+| `url`         | string  | No       | URL where users can obtain the secret                    |
+
+**Accessing Secrets in Swift:**
+
+When a tool is invoked, Osaurus automatically injects configured secrets into the payload under the `_secrets` key:
+
+```swift
+func run(args: String) -> String {
+    struct Args: Decodable {
+        let location: String
+        let _secrets: [String: String]?
+    }
+
+    guard let data = args.data(using: .utf8),
+          let input = try? JSONDecoder().decode(Args.self, from: data)
+    else {
+        return "{\"error\": \"Invalid arguments\"}"
+    }
+
+    // Get the API key from secrets
+    guard let apiKey = input._secrets?["api_key"] else {
+        return "{\"error\": \"API key not configured. Please configure secrets in Osaurus settings.\"}"
+    }
+
+    // Use the API key for requests
+    let result = fetchWeather(location: input.location, apiKey: apiKey)
+    return "{\"weather\": \"\(result)\"}"
+}
+```
+
+**User Experience:**
+
+- When a plugin with secrets is installed, Osaurus prompts the user to configure them
+- If required secrets are missing, a "Needs API Key" badge appears on the plugin card
+- Users can configure or edit secrets anytime via the plugin menu → "Configure Secrets"
+- Secrets are stored securely in the macOS Keychain
+- Secrets are automatically cleaned up when the plugin is uninstalled
 
 ### 2. Add Release Workflow
 
