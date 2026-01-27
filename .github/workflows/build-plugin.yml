@@ -104,9 +104,13 @@ jobs:
             exit 1
           fi
 
+          # Write to temp files for reliable base64 encoding (matches signature_b64 approach)
+          echo -n "$PLUGIN_ID" > "$RUNNER_TEMP/plugin_id.txt"
+          echo "$MANIFEST" | jq -c . > "$RUNNER_TEMP/manifest.json"
+
           echo "plugin_id=$PLUGIN_ID" >> $GITHUB_OUTPUT
-          echo "plugin_id_b64=$(echo -n "$PLUGIN_ID" | base64)" >> $GITHUB_OUTPUT
-          echo "manifest_b64=$(echo "$MANIFEST" | jq -c . | base64 | tr -d '\n')" >> $GITHUB_OUTPUT
+          echo "plugin_id_b64=$(base64 -i "$RUNNER_TEMP/plugin_id.txt")" >> $GITHUB_OUTPUT
+          echo "manifest_b64=$(base64 -i "$RUNNER_TEMP/manifest.json" | tr -d '\n')" >> $GITHUB_OUTPUT
 
           echo "Extracted plugin_id: $PLUGIN_ID"
 
@@ -174,7 +178,8 @@ jobs:
         id: urls
         run: |
           ARTIFACT_URL="${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.package.outputs.artifact }}"
-          echo "artifact_url_b64=$(echo -n "$ARTIFACT_URL" | base64 | tr -d '\n')" >> $GITHUB_OUTPUT
+          echo -n "$ARTIFACT_URL" > "$RUNNER_TEMP/artifact_url.txt"
+          echo "artifact_url_b64=$(base64 -i "$RUNNER_TEMP/artifact_url.txt")" >> $GITHUB_OUTPUT
 
   registry-pr:
     needs: build
