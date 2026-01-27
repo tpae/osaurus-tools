@@ -24,11 +24,13 @@ on:
         type: string
         default: 'macos-14'
     secrets:
-      APPLE_CERTIFICATE_BASE64:
+      DEVELOPER_ID_CERTIFICATE_P12_BASE64:
         required: true
-      APPLE_CERTIFICATE_PASSWORD:
+      DEVELOPER_ID_CERTIFICATE_PASSWORD:
         required: true
       MINISIGN_SECRET_KEY:
+        required: true
+      MINISIGN_PASSWORD:
         required: true
       MINISIGN_PUBLIC_KEY:
         required: true
@@ -121,8 +123,8 @@ jobs:
 
       - name: Code sign
         env:
-          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          DEVELOPER_ID_CERTIFICATE_P12_BASE64: ${{ secrets.DEVELOPER_ID_CERTIFICATE_P12_BASE64 }}
+          DEVELOPER_ID_CERTIFICATE_PASSWORD: ${{ secrets.DEVELOPER_ID_CERTIFICATE_PASSWORD }}
         run: |
           KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
@@ -131,8 +133,8 @@ jobs:
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > $RUNNER_TEMP/cert.p12
-          security import $RUNNER_TEMP/cert.p12 -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          echo "$DEVELOPER_ID_CERTIFICATE_P12_BASE64" | base64 --decode > $RUNNER_TEMP/cert.p12
+          security import $RUNNER_TEMP/cert.p12 -P "$DEVELOPER_ID_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
           security list-keychain -d user -s "$KEYCHAIN_PATH"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
@@ -160,11 +162,12 @@ jobs:
         id: sign
         env:
           MINISIGN_SECRET_KEY: ${{ secrets.MINISIGN_SECRET_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
         run: |
           brew install minisign
           echo "$MINISIGN_SECRET_KEY" > $RUNNER_TEMP/minisign.key
 
-          minisign -Sm "${{ steps.package.outputs.artifact }}" -s $RUNNER_TEMP/minisign.key
+          echo "$MINISIGN_PASSWORD" | minisign -Sm "${{ steps.package.outputs.artifact }}" -s $RUNNER_TEMP/minisign.key
 
           SIGNATURE=$(cat "${{ steps.package.outputs.artifact }}.minisig")
 

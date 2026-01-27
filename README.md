@@ -191,13 +191,14 @@ That's it. No inputs needed - everything is extracted from your dylib's `get_man
 
 All secrets are required for code signing and artifact verification.
 
-| Secret                      | Purpose                                        |
-| --------------------------- | ---------------------------------------------- |
-| `APPLE_CERTIFICATE_BASE64`  | Base64-encoded Developer ID certificate (.p12) |
-| `APPLE_CERTIFICATE_PASSWORD`| Password for the Apple certificate             |
-| `MINISIGN_SECRET_KEY`       | Sign release artifacts for integrity           |
-| `MINISIGN_PUBLIC_KEY`       | Public key included in registry manifest       |
-| `REGISTRY_PAT`              | GitHub PAT with `public_repo` scope for auto-PR|
+| Secret                              | Purpose                                        |
+| ----------------------------------- | ---------------------------------------------- |
+| `DEVELOPER_ID_CERTIFICATE_P12_BASE64` | Base64-encoded Developer ID certificate (.p12) |
+| `DEVELOPER_ID_CERTIFICATE_PASSWORD` | Password for the Apple certificate             |
+| `MINISIGN_SECRET_KEY`               | Minisign secret key for artifact signing       |
+| `MINISIGN_PASSWORD`                 | Password for the minisign key                  |
+| `MINISIGN_PUBLIC_KEY`               | Public key included in registry manifest       |
+| `REGISTRY_PAT`                      | GitHub PAT with `public_repo` scope for auto-PR|
 
 Generate minisign keys:
 
