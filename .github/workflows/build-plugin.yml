@@ -292,8 +292,9 @@ jobs:
           mkdir -p plugins
 
           if [ -f "$MANIFEST_PATH" ]; then
+            # Update tools from manifest and prepend new version to versions array
             jq --slurpfile new "$GITHUB_WORKSPACE/registry-manifest.json" \
-              '.versions = [$new[0].versions[0]] + .versions | .versions |= unique_by(.version)' \
+              '.capabilities.tools = $new[0].capabilities.tools | .versions = [$new[0].versions[0]] + .versions | .versions |= unique_by(.version)' \
               "$MANIFEST_PATH" > tmp.json && mv tmp.json "$MANIFEST_PATH"
           else
             cp "$GITHUB_WORKSPACE/registry-manifest.json" "$MANIFEST_PATH"

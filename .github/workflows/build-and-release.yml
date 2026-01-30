@@ -474,8 +474,9 @@ jobs:
 
           if [ -f "$REGISTRY_FILE" ]; then
             # Merge new version into existing registry file
-            # Keep existing metadata, prepend new version to versions array
+            # Update tools from manifest and prepend new version to versions array
             jq --slurpfile new /tmp/registry-manifest.json '
+              .capabilities.tools = $new[0].capabilities.tools |
               .versions = [$new[0].versions[0]] + .versions |
               .versions |= unique_by(.version)
             ' "$REGISTRY_FILE" > /tmp/updated.json && mv /tmp/updated.json "$REGISTRY_FILE"
