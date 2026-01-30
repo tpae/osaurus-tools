@@ -4,7 +4,9 @@
   "description": "Control Apple Music playback, search your library, and get track information",
   "homepage": "https://github.com/dinoki-ai/osaurus-music",
   "license": "MIT",
-  "authors": ["dinoki-ai"],
+  "authors": [
+    "dinoki-ai"
+  ],
   "capabilities": {
     "tools": [
       {
@@ -69,6 +71,22 @@
           "min_macos": "15.0",
           "minisign": {
             "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6ViZ8jwe6I1jVkAlDasRk4l0f1Q2DyJOXwYysHFwNiHkRvF+6df+FbYRot5ceIm5xmkHqQTJhhBb+JeKDeeBhDVg0=\ntrusted comment: timestamp:1769728149\tfile:osaurus.music-1.0.0-macos-arm64.zip\nOdH8fmVHzPdjz7JMYni+u2Z/xHctp3npDCa2SbMXvQJL+T/uaEWBN/npBnvH3pYXNhiBk9NZFxaUT2XRD8KXBw=="
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.0.1",
+      "release_date": "2026-01-30",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/dinoki-ai/osaurus-music/releases/download/1.0.1/osaurus.music-1.0.1-macos-arm64.zip",
+          "sha256": "12eff78218d4bfc8d184722d864e52ee6f2e8859ebaa89e2f5402150b9960777",
+          "min_macos": "15.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6ViWDkYSTi1KLcSpi7v2Bv1UL/RD+uicf2onDKDlD5VVyGi1kMfP7PJM/KM5RJYAfzm7006o3e4WcNEMOIxeXJaA4=\ntrusted comment: timestamp:1769779178\tfile:osaurus.music-1.0.1-macos-arm64.zip\nYnBvr7Y/1uzFYRETKT4n4RgJMEDEnp7Tq+R/S44O+MCOHq1c663zf+Lue8yVIfYpeJkmHPpl8IpMtHE6uRTBDg=="
           }
         }
       ]
