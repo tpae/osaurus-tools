@@ -18,6 +18,11 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
     // Element ref counter - increments with each snapshot
     private var refCounter = 0
 
+    // State tracking for reliability
+    private var hasNavigated = false
+    private var lastNavigationURL: String?
+    private var snapshotGeneration = 0
+
     override init() {
         super.init()
 
@@ -96,6 +101,10 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
             waitForDOMStable(timeout: timeout)
         }
 
+        // Mark navigation as successful
+        hasNavigated = true
+        lastNavigationURL = urlString
+
         return (true, nil)
     }
 
@@ -124,26 +133,60 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
     }
 
     private func waitForDOMStable(timeout: TimeInterval) {
-        // Use MutationObserver to detect DOM changes
-        let script = """
-            new Promise((resolve) => {
-                let timeout;
-                const observer = new MutationObserver(() => {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => {
-                        observer.disconnect();
-                        resolve(true);
-                    }, 300);
-                });
-                observer.observe(document.body, { childList: true, subtree: true, attributes: true });
-                timeout = setTimeout(() => {
-                    observer.disconnect();
-                    resolve(true);
-                }, 300);
-            });
+        // Poll-based approach: Check DOM stability by comparing snapshots
+        // First, wait for document.readyState to be complete
+        let readyScript = """
+            (function() {
+                try {
+                    return document.readyState === 'complete';
+                } catch (e) {
+                    return false;
+                }
+            })()
             """
 
-        _ = evaluateJavaScript(script, timeout: timeout)
+        let startTime = Date()
+
+        // Wait for document ready
+        while Date().timeIntervalSince(startTime) < timeout {
+            let result = evaluateJavaScript(readyScript)
+            if result.result as? Bool == true {
+                break
+            }
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+
+        // Now check for DOM stability by comparing element counts
+        let countScript = """
+            (function() {
+                try {
+                    if (!document.body) return -1;
+                    return document.body.getElementsByTagName('*').length;
+                } catch (e) {
+                    return -1;
+                }
+            })()
+            """
+
+        var lastCount = -1
+        var stableIterations = 0
+        let requiredStableIterations = 3  // DOM must be stable for 3 consecutive checks
+
+        while Date().timeIntervalSince(startTime) < timeout {
+            let result = evaluateJavaScript(countScript)
+            if let count = result.result as? Int {
+                if count == lastCount && count >= 0 {
+                    stableIterations += 1
+                    if stableIterations >= requiredStableIterations {
+                        return  // DOM is stable
+                    }
+                } else {
+                    stableIterations = 0
+                    lastCount = count
+                }
+            }
+            Thread.sleep(forTimeInterval: 0.1)
+        }
     }
 
     // MARK: - JavaScript Execution
@@ -181,8 +224,15 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
     }
 
     func takeSnapshot(options: SnapshotOptions = SnapshotOptions()) -> String {
-        // Reset ref counter for each snapshot
+        // Validate state before attempting snapshot
+        guard hasNavigated else {
+            return "Error: No page loaded. Call browser_navigate first to load a page."
+        }
+
+        // Reset ref counter and increment generation for each snapshot
         refCounter = 0
+        snapshotGeneration += 1
+        let currentGeneration = snapshotGeneration
 
         let filterCondition: String
         switch options.filter {
@@ -201,144 +251,219 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
         let visibilityCheck =
             options.visibleOnly
             ? """
-                const rect = el.getBoundingClientRect();
-                const style = window.getComputedStyle(el);
-                if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
-                if (rect.width === 0 && rect.height === 0) return false;
-                return true;
+                try {
+                    const rect = el.getBoundingClientRect();
+                    const style = window.getComputedStyle(el);
+                    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+                    if (rect.width === 0 && rect.height === 0) return false;
+                    return true;
+                } catch (e) {
+                    return false;
+                }
             """ : "return true;"
 
         let script = """
             (function() {
-                const maxElements = \(options.maxElements);
-                const results = [];
-                let refId = 0;
-                
-                // Store refs in a global map for later retrieval
-                if (!window.__osaurus_refs) {
+                try {
+                    // Validate page state
+                    if (!document || !document.body) {
+                        return {error: 'Page not ready - document.body is null. Wait for page to load or call browser_navigate again.'};
+                    }
+                    
+                    if (document.readyState === 'loading') {
+                        return {error: 'Page still loading. Wait a moment and try again, or use browser_wait_for.'};
+                    }
+                    
+                    const maxElements = \(options.maxElements);
+                    const results = [];
+                    let refId = 0;
+                    
+                    // Store refs in a global map for later retrieval with generation tracking
                     window.__osaurus_refs = new Map();
-                }
-                window.__osaurus_refs.clear();
-                
-                function isVisible(el) {
-                    \(visibilityCheck)
-                }
-                
-                function isInteractive(el) {
-                    const tag = el.tagName.toLowerCase();
-                    const role = el.getAttribute('role');
-                    const tabIndex = el.getAttribute('tabindex');
+                    window.__osaurus_snapshot_gen = \(currentGeneration);
                     
-                    // Standard interactive elements
-                    if (['a', 'button', 'input', 'textarea', 'select', 'details', 'summary'].includes(tag)) return true;
-                    
-                    // ARIA roles
-                    if (['button', 'link', 'menuitem', 'option', 'radio', 'checkbox', 'tab', 'textbox', 'combobox', 'listbox', 'menu', 'menubar', 'slider', 'spinbutton', 'switch'].includes(role)) return true;
-                    
-                    // Clickable elements
-                    if (el.onclick || el.getAttribute('onclick')) return true;
-                    if (tabIndex && tabIndex !== '-1') return true;
-                    
-                    // Contenteditable
-                    if (el.getAttribute('contenteditable') === 'true') return true;
-                    
-                    return false;
-                }
-                
-                function getElementType(el) {
-                    const tag = el.tagName.toLowerCase();
-                    const type = el.getAttribute('type');
-                    const role = el.getAttribute('role');
-                    
-                    if (tag === 'a') return 'link';
-                    if (tag === 'button' || role === 'button') return 'button';
-                    if (tag === 'input') {
-                        if (type === 'checkbox') return 'checkbox';
-                        if (type === 'radio') return 'radio';
-                        if (type === 'submit') return 'submit';
-                        if (type === 'file') return 'file';
-                        return 'input';
-                    }
-                    if (tag === 'textarea') return 'textarea';
-                    if (tag === 'select') return 'select';
-                    if (tag === 'img') return 'img';
-                    if (role) return role;
-                    return tag;
-                }
-                
-                function truncate(str, len) {
-                    if (!str) return '';
-                    str = str.trim().replace(/\\s+/g, ' ');
-                    return str.length > len ? str.substring(0, len) + '...' : str;
-                }
-                
-                function getElementText(el) {
-                    const tag = el.tagName.toLowerCase();
-                    
-                    // For inputs, use placeholder or aria-label
-                    if (tag === 'input' || tag === 'textarea') {
-                        return el.placeholder || el.getAttribute('aria-label') || el.name || '';
+                    function isVisible(el) {
+                        \(visibilityCheck)
                     }
                     
-                    // For images, use alt text
-                    if (tag === 'img') {
-                        return el.alt || el.title || '';
-                    }
-                    
-                    // For other elements, get visible text
-                    const text = el.innerText || el.textContent || '';
-                    return text;
-                }
-                
-                function getElementInfo(el) {
-                    const ref = 'E' + (++refId);
-                    window.__osaurus_refs.set(ref, el);
-                    
-                    const type = getElementType(el);
-                    const text = truncate(getElementText(el), 50);
-                    
-                    let info = { ref, type, text };
-                    
-                    // Add relevant attributes
-                    if (el.name) info.name = el.name;
-                    if (el.id) info.id = truncate(el.id, 30);
-                    if (el.value && el.tagName.toLowerCase() !== 'textarea') info.value = truncate(el.value, 30);
-                    if (el.placeholder) info.placeholder = truncate(el.placeholder, 30);
-                    if (el.href) info.href = truncate(el.href, 50);
-                    if (el.checked) info.checked = true;
-                    if (el.disabled) info.disabled = true;
-                    if (el.required) info.required = true;
-                    if (el.getAttribute('aria-label')) info.ariaLabel = truncate(el.getAttribute('aria-label'), 30);
-                    
-                    return info;
-                }
-                
-                // Walk the DOM
-                const walker = document.createTreeWalker(
-                    document.body,
-                    NodeFilter.SHOW_ELEMENT,
-                    {
-                        acceptNode: function(node) {
-                            if (!isInteractive(node)) return NodeFilter.FILTER_SKIP;
-                            if (!isVisible(node)) return NodeFilter.FILTER_SKIP;
-                            if (!(\(filterCondition))) return NodeFilter.FILTER_SKIP;
-                            return NodeFilter.FILTER_ACCEPT;
+                    function isInteractive(el) {
+                        try {
+                            const tag = el.tagName ? el.tagName.toLowerCase() : '';
+                            if (!tag) return false;
+                            
+                            const role = el.getAttribute ? el.getAttribute('role') : null;
+                            const tabIndex = el.getAttribute ? el.getAttribute('tabindex') : null;
+                            
+                            // Standard interactive elements
+                            if (['a', 'button', 'input', 'textarea', 'select', 'details', 'summary'].includes(tag)) return true;
+                            
+                            // ARIA roles
+                            if (['button', 'link', 'menuitem', 'option', 'radio', 'checkbox', 'tab', 'textbox', 'combobox', 'listbox', 'menu', 'menubar', 'slider', 'spinbutton', 'switch'].includes(role)) return true;
+                            
+                            // Clickable elements
+                            if (el.onclick || (el.getAttribute && el.getAttribute('onclick'))) return true;
+                            if (tabIndex && tabIndex !== '-1') return true;
+                            
+                            // Contenteditable
+                            if (el.getAttribute && el.getAttribute('contenteditable') === 'true') return true;
+                            
+                            return false;
+                        } catch (e) {
+                            return false;
                         }
                     }
-                );
-                
-                let el;
-                while ((el = walker.nextNode()) && results.length < maxElements) {
-                    results.push(getElementInfo(el));
+                    
+                    function getElementType(el) {
+                        try {
+                            const tag = el.tagName ? el.tagName.toLowerCase() : 'unknown';
+                            const type = el.getAttribute ? el.getAttribute('type') : null;
+                            const role = el.getAttribute ? el.getAttribute('role') : null;
+                            
+                            if (tag === 'a') return 'link';
+                            if (tag === 'button' || role === 'button') return 'button';
+                            if (tag === 'input') {
+                                if (type === 'checkbox') return 'checkbox';
+                                if (type === 'radio') return 'radio';
+                                if (type === 'submit') return 'submit';
+                                if (type === 'file') return 'file';
+                                return 'input';
+                            }
+                            if (tag === 'textarea') return 'textarea';
+                            if (tag === 'select') return 'select';
+                            if (tag === 'img') return 'img';
+                            if (role) return role;
+                            return tag;
+                        } catch (e) {
+                            return 'unknown';
+                        }
+                    }
+                    
+                    function truncate(str, len) {
+                        if (!str) return '';
+                        try {
+                            str = String(str).trim().replace(/\\s+/g, ' ');
+                            return str.length > len ? str.substring(0, len) + '...' : str;
+                        } catch (e) {
+                            return '';
+                        }
+                    }
+                    
+                    function getElementText(el) {
+                        try {
+                            const tag = el.tagName ? el.tagName.toLowerCase() : '';
+                            
+                            // For inputs, use placeholder or aria-label
+                            if (tag === 'input' || tag === 'textarea') {
+                                return el.placeholder || (el.getAttribute && el.getAttribute('aria-label')) || el.name || '';
+                            }
+                            
+                            // For images, use alt text
+                            if (tag === 'img') {
+                                return el.alt || el.title || '';
+                            }
+                            
+                            // For other elements, get visible text
+                            const text = el.innerText || el.textContent || '';
+                            return text;
+                        } catch (e) {
+                            return '';
+                        }
+                    }
+                    
+                    function getElementInfo(el) {
+                        try {
+                            const ref = 'E' + (++refId);
+                            window.__osaurus_refs.set(ref, el);
+                            
+                            const type = getElementType(el);
+                            const text = truncate(getElementText(el), 50);
+                            
+                            let info = { ref, type, text };
+                            
+                            // Add relevant attributes with safety checks
+                            try {
+                                if (el.name) info.name = el.name;
+                                if (el.id) info.id = truncate(el.id, 30);
+                                if (el.value && el.tagName && el.tagName.toLowerCase() !== 'textarea') info.value = truncate(el.value, 30);
+                                if (el.placeholder) info.placeholder = truncate(el.placeholder, 30);
+                                if (el.href) info.href = truncate(el.href, 50);
+                                if (el.checked) info.checked = true;
+                                if (el.disabled) info.disabled = true;
+                                if (el.required) info.required = true;
+                                if (el.getAttribute && el.getAttribute('aria-label')) info.ariaLabel = truncate(el.getAttribute('aria-label'), 30);
+                            } catch (attrError) {
+                                // Continue with partial info
+                            }
+                            
+                            return info;
+                        } catch (e) {
+                            return null;
+                        }
+                    }
+                    
+                    // Walk the DOM with error handling
+                    let walker;
+                    try {
+                        walker = document.createTreeWalker(
+                            document.body,
+                            NodeFilter.SHOW_ELEMENT,
+                            {
+                                acceptNode: function(node) {
+                                    try {
+                                        if (!node || !node.tagName) return NodeFilter.FILTER_SKIP;
+                                        if (!isInteractive(node)) return NodeFilter.FILTER_SKIP;
+                                        if (!isVisible(node)) return NodeFilter.FILTER_SKIP;
+                                        if (!(\(filterCondition))) return NodeFilter.FILTER_SKIP;
+                                        return NodeFilter.FILTER_ACCEPT;
+                                    } catch (e) {
+                                        return NodeFilter.FILTER_SKIP;
+                                    }
+                                }
+                            }
+                        );
+                    } catch (walkerError) {
+                        return {error: 'Failed to create DOM walker: ' + walkerError.message + '. The page may be in an invalid state.'};
+                    }
+                    
+                    let el;
+                    let iterations = 0;
+                    const maxIterations = 10000; // Prevent infinite loops
+                    
+                    while (iterations < maxIterations) {
+                        iterations++;
+                        try {
+                            el = walker.nextNode();
+                            if (!el) break;
+                            if (results.length >= maxElements) break;
+                            
+                            const info = getElementInfo(el);
+                            if (info) {
+                                results.push(info);
+                            }
+                        } catch (walkError) {
+                            // Skip problematic elements and continue
+                            continue;
+                        }
+                    }
+                    
+                    let hasMore = false;
+                    try {
+                        hasMore = walker.nextNode() !== null;
+                    } catch (e) {
+                        // Ignore - just report what we have
+                    }
+                    
+                    return {
+                        url: window.location.href || '',
+                        title: document.title || '',
+                        elementCount: results.length,
+                        hasMore: hasMore,
+                        elements: results,
+                        generation: \(currentGeneration)
+                    };
+                } catch (e) {
+                    return {error: 'Snapshot failed: ' + (e.message || String(e)) + '. Try calling browser_navigate to reload the page.'};
                 }
-                
-                return {
-                    url: window.location.href,
-                    title: document.title,
-                    elementCount: results.length,
-                    hasMore: walker.nextNode() !== null,
-                    elements: results
-                };
             })()
             """
 
@@ -346,6 +471,11 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
 
         if let error = result.error {
             return "Error: \(error)"
+        }
+
+        // Check for error in the result object
+        if let dict = result.result as? [String: Any], let errorMsg = dict["error"] as? String {
+            return "Error: \(errorMsg)"
         }
 
         guard let data = result.result as? [String: Any] else {
@@ -423,25 +553,59 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
     // MARK: - Element Interactions (Ref-based)
 
     func clickElement(ref: String?, selector: String?) -> (success: Bool, error: String?) {
+        // Validate state
+        guard hasNavigated else {
+            return (false, "No page loaded. Call browser_navigate first.")
+        }
+
         let script: String
+        let currentGen = snapshotGeneration
 
         if let ref = ref {
             script = """
                 (function() {
-                    const el = window.__osaurus_refs?.get('\(ref)');
-                    if (!el) return {success: false, error: 'Element ref not found. Call browser_snapshot first.'};
-                    if (!document.body.contains(el)) return {success: false, error: 'Element no longer in DOM. Call browser_snapshot to refresh.'};
-                    el.click();
-                    return {success: true};
+                    try {
+                        if (!document || !document.body) {
+                            return {success: false, error: 'Page not ready. Call browser_navigate to reload.'};
+                        }
+                        if (!window.__osaurus_refs) {
+                            return {success: false, error: 'No snapshot taken. Call browser_snapshot first to get element refs.'};
+                        }
+                        if (window.__osaurus_snapshot_gen !== \(currentGen)) {
+                            return {success: false, error: 'Snapshot is stale (page may have changed). Call browser_snapshot again to get fresh refs.'};
+                        }
+                        const el = window.__osaurus_refs.get('\(ref)');
+                        if (!el) {
+                            return {success: false, error: 'Element ref \\'\(ref)\\' not found. Call browser_snapshot to get current element refs.'};
+                        }
+                        if (!document.body.contains(el)) {
+                            return {success: false, error: 'Element no longer in DOM (page changed). Call browser_snapshot to refresh.'};
+                        }
+                        el.scrollIntoView({block: 'center', behavior: 'instant'});
+                        el.click();
+                        return {success: true};
+                    } catch (e) {
+                        return {success: false, error: 'Click failed: ' + (e.message || String(e))};
+                    }
                 })()
                 """
         } else if let selector = selector {
             script = """
                 (function() {
-                    const el = document.querySelector('\(escapeSelector(selector))');
-                    if (!el) return {success: false, error: 'Element not found: \(escapeSelector(selector))'};
-                    el.click();
-                    return {success: true};
+                    try {
+                        if (!document || !document.body) {
+                            return {success: false, error: 'Page not ready. Call browser_navigate to reload.'};
+                        }
+                        const el = document.querySelector('\(escapeSelector(selector))');
+                        if (!el) {
+                            return {success: false, error: 'Element not found with selector: \(escapeSelector(selector))'};
+                        }
+                        el.scrollIntoView({block: 'center', behavior: 'instant'});
+                        el.click();
+                        return {success: true};
+                    } catch (e) {
+                        return {success: false, error: 'Click failed: ' + (e.message || String(e))};
+                    }
                 })()
                 """
         } else {
@@ -451,7 +615,7 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
         let result = evaluateJavaScript(script)
 
         if let error = result.error {
-            return (false, error)
+            return (false, "JavaScript error: \(error). Try calling browser_navigate to reload the page.")
         }
 
         if let dict = result.result as? [String: Any] {
@@ -463,54 +627,94 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
             }
         }
 
-        return (false, "Unknown error")
+        return (false, "Unknown error during click. Try calling browser_snapshot to refresh element refs.")
     }
 
     func typeText(
         ref: String?, selector: String?, text: String, clear: Bool = true, submit: Bool = false
     ) -> (success: Bool, error: String?) {
+        // Validate state
+        guard hasNavigated else {
+            return (false, "No page loaded. Call browser_navigate first.")
+        }
+
         let escapedText = text.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "'", with: "\\'")
             .replacingOccurrences(of: "\n", with: "\\n")
 
+        let currentGen = snapshotGeneration
         let getElementScript: String
+        let refValidation: String
+
         if let ref = ref {
             getElementScript = "window.__osaurus_refs?.get('\(ref)')"
+            refValidation = """
+                if (!window.__osaurus_refs) {
+                    return {success: false, error: 'No snapshot taken. Call browser_snapshot first.'};
+                }
+                if (window.__osaurus_snapshot_gen !== \(currentGen)) {
+                    return {success: false, error: 'Snapshot is stale. Call browser_snapshot again.'};
+                }
+                """
         } else if let selector = selector {
             getElementScript = "document.querySelector('\(escapeSelector(selector))')"
+            refValidation = ""
         } else {
             return (false, "Either ref or selector must be provided")
         }
 
         let script = """
             (function() {
-                const el = \(getElementScript);
-                if (!el) return {success: false, error: 'Element not found'};
-                if (!document.body.contains(el)) return {success: false, error: 'Element no longer in DOM'};
-                
-                el.focus();
-                if (\(clear)) el.value = '';
-                el.value += '\(escapedText)';
-                el.dispatchEvent(new Event('input', {bubbles: true}));
-                el.dispatchEvent(new Event('change', {bubbles: true}));
-                
-                if (\(submit)) {
-                    const form = el.closest('form');
-                    if (form) {
-                        form.submit();
-                    } else {
-                        el.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', bubbles: true}));
+                try {
+                    if (!document || !document.body) {
+                        return {success: false, error: 'Page not ready. Call browser_navigate to reload.'};
                     }
+                    \(refValidation)
+                    const el = \(getElementScript);
+                    if (!el) {
+                        return {success: false, error: 'Element not found. Call browser_snapshot to get current refs.'};
+                    }
+                    if (!document.body.contains(el)) {
+                        return {success: false, error: 'Element no longer in DOM. Call browser_snapshot to refresh.'};
+                    }
+                    
+                    el.scrollIntoView({block: 'center', behavior: 'instant'});
+                    el.focus();
+                    
+                    // Handle contenteditable elements
+                    if (el.getAttribute('contenteditable') === 'true') {
+                        if (\(clear)) el.innerHTML = '';
+                        el.innerHTML += '\(escapedText)';
+                    } else {
+                        if (\(clear)) el.value = '';
+                        el.value += '\(escapedText)';
+                    }
+                    
+                    el.dispatchEvent(new Event('input', {bubbles: true}));
+                    el.dispatchEvent(new Event('change', {bubbles: true}));
+                    
+                    if (\(submit)) {
+                        const form = el.closest('form');
+                        if (form) {
+                            form.submit();
+                        } else {
+                            el.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', bubbles: true}));
+                            el.dispatchEvent(new KeyboardEvent('keypress', {key: 'Enter', code: 'Enter', bubbles: true}));
+                            el.dispatchEvent(new KeyboardEvent('keyup', {key: 'Enter', code: 'Enter', bubbles: true}));
+                        }
+                    }
+                    
+                    return {success: true};
+                } catch (e) {
+                    return {success: false, error: 'Type failed: ' + (e.message || String(e))};
                 }
-                
-                return {success: true};
             })()
             """
 
         let result = evaluateJavaScript(script)
 
         if let error = result.error {
-            return (false, error)
+            return (false, "JavaScript error: \(error). Try calling browser_navigate to reload.")
         }
 
         if let dict = result.result as? [String: Any] {
@@ -522,40 +726,77 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
             }
         }
 
-        return (false, "Unknown error")
+        return (false, "Unknown error during type. Try calling browser_snapshot to refresh.")
     }
 
     func selectOption(ref: String?, selector: String?, values: [String]) -> (success: Bool, error: String?) {
+        // Validate state
+        guard hasNavigated else {
+            return (false, "No page loaded. Call browser_navigate first.")
+        }
+
         let valuesJSON = values.map { "\"\($0.replacingOccurrences(of: "\"", with: "\\\""))\"" }.joined(separator: ",")
+        let currentGen = snapshotGeneration
 
         let getElementScript: String
+        let refValidation: String
+
         if let ref = ref {
             getElementScript = "window.__osaurus_refs?.get('\(ref)')"
+            refValidation = """
+                if (!window.__osaurus_refs) {
+                    return {success: false, error: 'No snapshot taken. Call browser_snapshot first.'};
+                }
+                if (window.__osaurus_snapshot_gen !== \(currentGen)) {
+                    return {success: false, error: 'Snapshot is stale. Call browser_snapshot again.'};
+                }
+                """
         } else if let selector = selector {
             getElementScript = "document.querySelector('\(escapeSelector(selector))')"
+            refValidation = ""
         } else {
             return (false, "Either ref or selector must be provided")
         }
 
         let script = """
             (function() {
-                const el = \(getElementScript);
-                if (!el) return {success: false, error: 'Element not found'};
-                if (el.tagName.toLowerCase() !== 'select') return {success: false, error: 'Element is not a select'};
-                
-                const values = [\(valuesJSON)];
-                for (const opt of el.options) {
-                    opt.selected = values.includes(opt.value) || values.includes(opt.text);
+                try {
+                    if (!document || !document.body) {
+                        return {success: false, error: 'Page not ready. Call browser_navigate to reload.'};
+                    }
+                    \(refValidation)
+                    const el = \(getElementScript);
+                    if (!el) {
+                        return {success: false, error: 'Element not found. Call browser_snapshot to get current refs.'};
+                    }
+                    if (!el.tagName || el.tagName.toLowerCase() !== 'select') {
+                        return {success: false, error: 'Element is not a <select>. Use browser_snapshot to find the correct element.'};
+                    }
+                    
+                    const values = [\(valuesJSON)];
+                    let matched = false;
+                    for (const opt of el.options) {
+                        const shouldSelect = values.includes(opt.value) || values.includes(opt.text);
+                        opt.selected = shouldSelect;
+                        if (shouldSelect) matched = true;
+                    }
+                    
+                    if (!matched && values.length > 0) {
+                        return {success: false, error: 'No matching options found for values: ' + values.join(', ')};
+                    }
+                    
+                    el.dispatchEvent(new Event('change', {bubbles: true}));
+                    return {success: true};
+                } catch (e) {
+                    return {success: false, error: 'Select failed: ' + (e.message || String(e))};
                 }
-                el.dispatchEvent(new Event('change', {bubbles: true}));
-                return {success: true};
             })()
             """
 
         let result = evaluateJavaScript(script)
 
         if let error = result.error {
-            return (false, error)
+            return (false, "JavaScript error: \(error). Try calling browser_navigate to reload.")
         }
 
         if let dict = result.result as? [String: Any] {
@@ -567,40 +808,72 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
             }
         }
 
-        return (false, "Unknown error")
+        return (false, "Unknown error during select. Try calling browser_snapshot to refresh.")
     }
 
     func hoverElement(ref: String?, selector: String?) -> (success: Bool, error: String?) {
+        // Validate state
+        guard hasNavigated else {
+            return (false, "No page loaded. Call browser_navigate first.")
+        }
+
+        let currentGen = snapshotGeneration
         let getElementScript: String
+        let refValidation: String
+
         if let ref = ref {
             getElementScript = "window.__osaurus_refs?.get('\(ref)')"
+            refValidation = """
+                if (!window.__osaurus_refs) {
+                    return {success: false, error: 'No snapshot taken. Call browser_snapshot first.'};
+                }
+                if (window.__osaurus_snapshot_gen !== \(currentGen)) {
+                    return {success: false, error: 'Snapshot is stale. Call browser_snapshot again.'};
+                }
+                """
         } else if let selector = selector {
             getElementScript = "document.querySelector('\(escapeSelector(selector))')"
+            refValidation = ""
         } else {
             return (false, "Either ref or selector must be provided")
         }
 
         let script = """
             (function() {
-                const el = \(getElementScript);
-                if (!el) return {success: false, error: 'Element not found'};
-                
-                const rect = el.getBoundingClientRect();
-                const x = rect.left + rect.width / 2;
-                const y = rect.top + rect.height / 2;
-                
-                el.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true, clientX: x, clientY: y}));
-                el.dispatchEvent(new MouseEvent('mouseover', {bubbles: true, clientX: x, clientY: y}));
-                el.dispatchEvent(new MouseEvent('mousemove', {bubbles: true, clientX: x, clientY: y}));
-                
-                return {success: true};
+                try {
+                    if (!document || !document.body) {
+                        return {success: false, error: 'Page not ready. Call browser_navigate to reload.'};
+                    }
+                    \(refValidation)
+                    const el = \(getElementScript);
+                    if (!el) {
+                        return {success: false, error: 'Element not found. Call browser_snapshot to get current refs.'};
+                    }
+                    if (!document.body.contains(el)) {
+                        return {success: false, error: 'Element no longer in DOM. Call browser_snapshot to refresh.'};
+                    }
+                    
+                    el.scrollIntoView({block: 'center', behavior: 'instant'});
+                    
+                    const rect = el.getBoundingClientRect();
+                    const x = rect.left + rect.width / 2;
+                    const y = rect.top + rect.height / 2;
+                    
+                    el.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true, clientX: x, clientY: y}));
+                    el.dispatchEvent(new MouseEvent('mouseover', {bubbles: true, clientX: x, clientY: y}));
+                    el.dispatchEvent(new MouseEvent('mousemove', {bubbles: true, clientX: x, clientY: y}));
+                    
+                    return {success: true};
+                } catch (e) {
+                    return {success: false, error: 'Hover failed: ' + (e.message || String(e))};
+                }
             })()
             """
 
         let result = evaluateJavaScript(script)
 
         if let error = result.error {
-            return (false, error)
+            return (false, "JavaScript error: \(error). Try calling browser_navigate to reload.")
         }
 
         if let dict = result.result as? [String: Any] {
@@ -612,7 +885,7 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
             }
         }
 
-        return (false, "Unknown error")
+        return (false, "Unknown error during hover. Try calling browser_snapshot to refresh.")
     }
 
     // MARK: - Scroll
@@ -620,16 +893,40 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
     func scroll(
         direction: String? = nil, ref: String? = nil, x: Int? = nil, y: Int? = nil
     ) -> (success: Bool, error: String?) {
+        // Validate state
+        guard hasNavigated else {
+            return (false, "No page loaded. Call browser_navigate first.")
+        }
+
         let script: String
+        let currentGen = snapshotGeneration
 
         if let ref = ref {
             // Scroll to element
             script = """
                 (function() {
-                    const el = window.__osaurus_refs?.get('\(ref)');
-                    if (!el) return {success: false, error: 'Element ref not found'};
-                    el.scrollIntoView({behavior: 'smooth', block: 'center'});
-                    return {success: true};
+                    try {
+                        if (!document || !document.body) {
+                            return {success: false, error: 'Page not ready. Call browser_navigate to reload.'};
+                        }
+                        if (!window.__osaurus_refs) {
+                            return {success: false, error: 'No snapshot taken. Call browser_snapshot first.'};
+                        }
+                        if (window.__osaurus_snapshot_gen !== \(currentGen)) {
+                            return {success: false, error: 'Snapshot is stale. Call browser_snapshot again.'};
+                        }
+                        const el = window.__osaurus_refs.get('\(ref)');
+                        if (!el) {
+                            return {success: false, error: 'Element ref not found. Call browser_snapshot to get current refs.'};
+                        }
+                        if (!document.body.contains(el)) {
+                            return {success: false, error: 'Element no longer in DOM. Call browser_snapshot to refresh.'};
+                        }
+                        el.scrollIntoView({behavior: 'smooth', block: 'center'});
+                        return {success: true};
+                    } catch (e) {
+                        return {success: false, error: 'Scroll failed: ' + (e.message || String(e))};
+                    }
                 })()
                 """
         } else if let direction = direction {
@@ -644,16 +941,30 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
             }
             script = """
                 (function() {
-                    window.scrollBy({left: \(scrollAmount.x), top: \(scrollAmount.y), behavior: 'smooth'});
-                    return {success: true};
+                    try {
+                        if (!document || !document.body) {
+                            return {success: false, error: 'Page not ready. Call browser_navigate to reload.'};
+                        }
+                        window.scrollBy({left: \(scrollAmount.x), top: \(scrollAmount.y), behavior: 'smooth'});
+                        return {success: true};
+                    } catch (e) {
+                        return {success: false, error: 'Scroll failed: ' + (e.message || String(e))};
+                    }
                 })()
                 """
         } else if let x = x, let y = y {
             // Scroll to position
             script = """
                 (function() {
-                    window.scrollTo({left: \(x), top: \(y), behavior: 'smooth'});
-                    return {success: true};
+                    try {
+                        if (!document || !document.body) {
+                            return {success: false, error: 'Page not ready. Call browser_navigate to reload.'};
+                        }
+                        window.scrollTo({left: \(x), top: \(y), behavior: 'smooth'});
+                        return {success: true};
+                    } catch (e) {
+                        return {success: false, error: 'Scroll failed: ' + (e.message || String(e))};
+                    }
                 })()
                 """
         } else {
@@ -663,18 +974,33 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
         let result = evaluateJavaScript(script)
 
         if let error = result.error {
-            return (false, error)
+            return (false, "JavaScript error: \(error). Try calling browser_navigate to reload.")
+        }
+
+        if let dict = result.result as? [String: Any] {
+            if let success = dict["success"] as? Bool, success {
+                // Wait for smooth scroll to complete
+                Thread.sleep(forTimeInterval: 0.3)
+                return (true, nil)
+            }
+            if let error = dict["error"] as? String {
+                return (false, error)
+            }
         }
 
         // Wait for smooth scroll to complete
         Thread.sleep(forTimeInterval: 0.3)
-
         return (true, nil)
     }
 
     // MARK: - Press Key
 
     func pressKey(key: String, modifiers: [String] = []) -> (success: Bool, error: String?) {
+        // Validate state
+        guard hasNavigated else {
+            return (false, "No page loaded. Call browser_navigate first.")
+        }
+
         let keyMap: [String: (key: String, code: String, keyCode: Int)] = [
             "enter": ("Enter", "Enter", 13),
             "escape": ("Escape", "Escape", 27),
@@ -702,30 +1028,46 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
 
         let script = """
             (function() {
-                const target = document.activeElement || document.body;
-                const opts = {
-                    key: '\(keyInfo.key)',
-                    code: '\(keyInfo.code)',
-                    keyCode: \(keyInfo.keyCode),
-                    which: \(keyInfo.keyCode),
-                    bubbles: true,
-                    cancelable: true,
-                    ctrlKey: \(ctrlKey),
-                    shiftKey: \(shiftKey),
-                    altKey: \(altKey),
-                    metaKey: \(metaKey)
-                };
-                target.dispatchEvent(new KeyboardEvent('keydown', opts));
-                target.dispatchEvent(new KeyboardEvent('keypress', opts));
-                target.dispatchEvent(new KeyboardEvent('keyup', opts));
-                return {success: true};
+                try {
+                    if (!document || !document.body) {
+                        return {success: false, error: 'Page not ready. Call browser_navigate to reload.'};
+                    }
+                    const target = document.activeElement || document.body;
+                    const opts = {
+                        key: '\(keyInfo.key)',
+                        code: '\(keyInfo.code)',
+                        keyCode: \(keyInfo.keyCode),
+                        which: \(keyInfo.keyCode),
+                        bubbles: true,
+                        cancelable: true,
+                        ctrlKey: \(ctrlKey),
+                        shiftKey: \(shiftKey),
+                        altKey: \(altKey),
+                        metaKey: \(metaKey)
+                    };
+                    target.dispatchEvent(new KeyboardEvent('keydown', opts));
+                    target.dispatchEvent(new KeyboardEvent('keypress', opts));
+                    target.dispatchEvent(new KeyboardEvent('keyup', opts));
+                    return {success: true};
+                } catch (e) {
+                    return {success: false, error: 'Key press failed: ' + (e.message || String(e))};
+                }
             })()
             """
 
         let result = evaluateJavaScript(script)
 
         if let error = result.error {
-            return (false, error)
+            return (false, "JavaScript error: \(error). Try calling browser_navigate to reload.")
+        }
+
+        if let dict = result.result as? [String: Any] {
+            if let success = dict["success"] as? Bool, success {
+                return (true, nil)
+            }
+            if let error = dict["error"] as? String {
+                return (false, error)
+            }
         }
 
         return (true, nil)
@@ -736,45 +1078,78 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
     func waitFor(
         text: String? = nil, textGone: String? = nil, time: TimeInterval? = nil, timeout: TimeInterval = 10
     ) -> (success: Bool, error: String?) {
+        // Time-based wait doesn't require page state
         if let time = time {
             Thread.sleep(forTimeInterval: time)
             return (true, nil)
+        }
+
+        // Text-based waits require a page to be loaded
+        guard hasNavigated else {
+            return (false, "No page loaded. Call browser_navigate first.")
         }
 
         let startTime = Date()
 
         if let text = text {
             let escapedText = text.replacingOccurrences(of: "'", with: "\\'")
+                .replacingOccurrences(of: "\\", with: "\\\\")
             while Date().timeIntervalSince(startTime) < timeout {
-                let script = "document.body.innerText.includes('\(escapedText)')"
+                let script = """
+                    (function() {
+                        try {
+                            if (!document || !document.body) return false;
+                            return document.body.innerText.includes('\(escapedText)');
+                        } catch (e) {
+                            return false;
+                        }
+                    })()
+                    """
                 let result = evaluateJavaScript(script)
                 if let found = result.result as? Bool, found {
                     return (true, nil)
                 }
                 Thread.sleep(forTimeInterval: 0.1)
             }
-            return (false, "Timeout waiting for text: \(text)")
+            return (
+                false, "Timeout after \(timeout)s waiting for text: '\(text)'. The text may not exist on this page."
+            )
         }
 
         if let textGone = textGone {
             let escapedText = textGone.replacingOccurrences(of: "'", with: "\\'")
+                .replacingOccurrences(of: "\\", with: "\\\\")
             while Date().timeIntervalSince(startTime) < timeout {
-                let script = "!document.body.innerText.includes('\(escapedText)')"
+                let script = """
+                    (function() {
+                        try {
+                            if (!document || !document.body) return true;
+                            return !document.body.innerText.includes('\(escapedText)');
+                        } catch (e) {
+                            return true;
+                        }
+                    })()
+                    """
                 let result = evaluateJavaScript(script)
                 if let gone = result.result as? Bool, gone {
                     return (true, nil)
                 }
                 Thread.sleep(forTimeInterval: 0.1)
             }
-            return (false, "Timeout waiting for text to disappear: \(textGone)")
+            return (false, "Timeout after \(timeout)s waiting for text to disappear: '\(textGone)'")
         }
 
-        return (false, "Provide text, textGone, or time")
+        return (false, "Provide text, text_gone, or time parameter")
     }
 
     // MARK: - Screenshot
 
     func takeScreenshot(fullPage: Bool = false) -> Data? {
+        // Validate state - need a page loaded for screenshot
+        guard hasNavigated else {
+            return nil
+        }
+
         var imageData: Data?
         let semaphore = DispatchSemaphore(value: 0)
 
@@ -782,17 +1157,33 @@ private class HeadlessBrowser: NSObject, WKNavigationDelegate {
             let config = WKSnapshotConfiguration()
 
             if fullPage {
-                // Get full page dimensions
-                self.webView.evaluateJavaScript(
-                    "JSON.stringify({width: document.body.scrollWidth, height: document.body.scrollHeight})"
-                ) { result, _ in
+                // Get full page dimensions with safety checks
+                let dimensionScript = """
+                    (function() {
+                        try {
+                            if (!document || !document.body) {
+                                return JSON.stringify({width: 1280, height: 800});
+                            }
+                            return JSON.stringify({
+                                width: Math.max(document.body.scrollWidth || 1280, 1280),
+                                height: Math.max(document.body.scrollHeight || 800, 800)
+                            });
+                        } catch (e) {
+                            return JSON.stringify({width: 1280, height: 800});
+                        }
+                    })()
+                    """
+                self.webView.evaluateJavaScript(dimensionScript) { result, _ in
                     if let jsonString = result as? String,
                         let data = jsonString.data(using: .utf8),
                         let dimensions = try? JSONSerialization.jsonObject(with: data) as? [String: CGFloat],
                         let width = dimensions["width"],
                         let height = dimensions["height"]
                     {
-                        config.rect = CGRect(x: 0, y: 0, width: width, height: height)
+                        // Cap dimensions to prevent memory issues
+                        let cappedWidth = min(width, 8000)
+                        let cappedHeight = min(height, 8000)
+                        config.rect = CGRect(x: 0, y: 0, width: cappedWidth, height: cappedHeight)
                     }
 
                     self.captureSnapshot(config: config) { data in
@@ -1162,7 +1553,8 @@ private class PluginContext {
         }
 
         guard let imageData = browser.takeScreenshot(fullPage: input.full_page ?? false) else {
-            return "{\"error\": \"Failed to capture screenshot\"}"
+            return
+                "{\"error\": \"Failed to capture screenshot. Make sure a page is loaded with browser_navigate first.\"}"
         }
 
         let timestamp = ISO8601DateFormatter().string(from: Date())
@@ -1198,10 +1590,29 @@ private class PluginContext {
             return "{\"error\": \"Invalid arguments. Required: script\"}"
         }
 
-        let result = browser.evaluateJavaScript(input.script)
+        // Wrap user script in try-catch for better error handling
+        let safeScript = """
+            (function() {
+                try {
+                    return {result: (function() { \(input.script) })()};
+                } catch (e) {
+                    return {error: e.message || String(e)};
+                }
+            })()
+            """
+
+        let result = browser.evaluateJavaScript(safeScript)
 
         if let error = result.error {
-            return "{\"error\": \"\(escapeJSON(error))\"}"
+            return
+                "{\"error\": \"JavaScript execution failed: \(escapeJSON(error)). Make sure a page is loaded with browser_navigate first.\"}"
+        }
+
+        if let dict = result.result as? [String: Any] {
+            if let errorMsg = dict["error"] as? String {
+                return "{\"error\": \"Script error: \(escapeJSON(errorMsg))\"}"
+            }
+            return "{\"result\": \(toJSONString(dict["result"]))}"
         }
 
         return "{\"result\": \(toJSONString(result.result))}"
