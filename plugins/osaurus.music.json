@@ -48,6 +48,10 @@
       {
         "name": "play_song",
         "description": "Search and play a specific song"
+      },
+      {
+        "name": "play_playlist",
+        "description": "Play a playlist by name (more reliable than playing individual songs)"
       }
     ]
   },
@@ -87,6 +91,22 @@
           "min_macos": "15.0",
           "minisign": {
             "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6ViWDkYSTi1KLcSpi7v2Bv1UL/RD+uicf2onDKDlD5VVyGi1kMfP7PJM/KM5RJYAfzm7006o3e4WcNEMOIxeXJaA4=\ntrusted comment: timestamp:1769779178\tfile:osaurus.music-1.0.1-macos-arm64.zip\nYnBvr7Y/1uzFYRETKT4n4RgJMEDEnp7Tq+R/S44O+MCOHq1c663zf+Lue8yVIfYpeJkmHPpl8IpMtHE6uRTBDg=="
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.0.2",
+      "release_date": "2026-01-30",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/dinoki-ai/osaurus-music/releases/download/1.0.2/osaurus.music-1.0.2-macos-arm64.zip",
+          "sha256": "7dcd3cf50743db19a5caf90e2951be9383b30135b9662f7c16643f3654857eba",
+          "min_macos": "15.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6ViZa8Rcyb68FBtKOhcK+kHRlkvwCAZP7tEyAn1UK/GMHWy75azNu1e9W2bdGW1LIDCXFXo3g6GcmPUqs5Koym0g8=\ntrusted comment: timestamp:1769780289\tfile:osaurus.music-1.0.2-macos-arm64.zip\nU19XiNnyP1reQe+yrAV+AnnjVpiRHD6M8ONmG3OgmI2SOGZ12cAtrsVyuLbMEzAJESbwch9pVc5JB3Og/n1gAw=="
           }
         }
       ]
