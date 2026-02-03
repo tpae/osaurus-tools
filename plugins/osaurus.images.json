@@ -92,6 +92,22 @@
           }
         }
       ]
+    },
+    {
+      "version": "1.0.1",
+      "release_date": "2026-02-03",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/dinoki-ai/osaurus-images/releases/download/1.0.1/osaurus.images-1.0.1-macos-arm64.zip",
+          "sha256": "7e539c1c24057e17c9cdd8a95114a6b446b8236f98121a1844c5015c6642ede6",
+          "min_macos": "15.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6VicltIuflyw98Ma1RfYd1I/A8DZ5oPbqoyAao0YoaClAahbhUp0XZTvgVBRBV5NbiOdKZkQ+CRUmjc21z5Ao32AI=\ntrusted comment: timestamp:1770123771\tfile:osaurus.images-1.0.1-macos-arm64.zip\nTFOIOZ4Awg/0jEFpLzjr+SPwKuM8pPrsQdO873FvgknbxOazxsB6BkSqyJe7cXjNDfNx+aV00TDWoKv4sRSkAQ=="
+          }
+        }
+      ]
     }
   ]
 }
