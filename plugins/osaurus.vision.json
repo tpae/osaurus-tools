@@ -9,15 +9,15 @@
     "tools": [
       {
         "name": "detect_text",
-        "description": "Detect and recognize text in an image using OCR. Returns detected text blocks with bounding boxes and confidence scores."
+        "description": "Detect and recognize text in an image or PDF using OCR. Returns detected text blocks with bounding boxes and confidence scores."
       },
       {
         "name": "detect_document",
-        "description": "Detect document boundaries in an image. Returns corner points for perspective correction."
+        "description": "Detect document boundaries in an image or PDF. Returns corner points for perspective correction."
       },
       {
         "name": "detect_barcodes",
-        "description": "Detect and decode barcodes and QR codes in an image."
+        "description": "Detect and decode barcodes and QR codes in an image or PDF."
       },
       {
         "name": "detect_faces",
@@ -62,6 +62,10 @@
       {
         "name": "remove_background",
         "description": "Remove the background from an image, keeping only the foreground. Outputs transparent PNG."
+      },
+      {
+        "name": "get_pdf_info",
+        "description": "Get information about a PDF file including page count, dimensions, and encryption status. Use this before processing PDFs to determine how many pages exist."
       }
     ]
   },
@@ -85,6 +89,22 @@
           "min_macos": "15.0",
           "minisign": {
             "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6Vic7NAMdo5DDG8teedOHSvVt9xsS5ZOMCneQyBOYetwTM2iTxfGZC6RoktDciRIcQ9YVCIs9KGRL6a2xWqKAfoAc=\ntrusted comment: timestamp:1770231204\tfile:osaurus.vision-1.0.0-macos-arm64.zip\ngtBJ/ETcpvl6dWSLtfXe7lNu7EDZaKzZDqgiVX3ZJQ0kTXZe+zlp82OaKnbPbay9csKZyMysgZrEHpWO4+ggCA=="
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.0.1",
+      "release_date": "2026-02-04",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/dinoki-ai/osaurus-vision/releases/download/1.0.1/osaurus.vision-1.0.1-macos-arm64.zip",
+          "sha256": "82427ec798df8030acc7f6208c86fc4fd0f9c44e2bf16947dff4f70d3863bbcb",
+          "min_macos": "15.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6ViXfAL25mg8n3nYVaLB50ijqaQCa03nLiHwuvKfk3UU9tANmygP6iY0+wdEjq9A2O/KjozQFXSMU/4LZH8RTdcAQ=\ntrusted comment: timestamp:1770237833\tfile:osaurus.vision-1.0.1-macos-arm64.zip\nQ9bwJlg9bMar6X4rPaIzi/17Fa0p9GvlO8bxG+d15rRnBEUwbvoX7jc48jfFqn5z/O9Gdfzdz3Z4I8qDTL1TBA=="
           }
         }
       ]
