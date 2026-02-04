@@ -13,6 +13,71 @@ on:
       - "scripts/validate.py"
 
 jobs:
+  discord-notify:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Get changed plugins
+        id: changes
+        run: |
+          # Get list of changed plugin files
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'plugins/*.json' | head -1)
+          if [ -z "$CHANGED" ]; then
+            echo "No plugin changes detected"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extract plugin_id and latest version from the changed file
+          PLUGIN_ID=$(jq -r '.plugin_id' "$CHANGED")
+          VERSION=$(jq -r '.versions[0].version' "$CHANGED")
+
+          echo "plugin_id=$PLUGIN_ID" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "skip=false" >> $GITHUB_OUTPUT
+          echo "Detected update: $PLUGIN_ID v$VERSION"
+
+      - name: Post to Discord
+        if: steps.changes.outputs.skip != 'true'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          PLUGIN_ID: ${{ steps.changes.outputs.plugin_id }}
+          VERSION: ${{ steps.changes.outputs.version }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "DISCORD_WEBHOOK not configured, skipping"
+            exit 0
+          fi
+
+          jq -n \
+            --arg content  "🔧 **New Tool Update!**" \
+            --arg plugin   "$PLUGIN_ID" \
+            --arg version  "$VERSION" \
+            --arg page     "[View Release](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" \
+            '{
+              content: $content,
+              embeds: [
+                {
+                  title: ($plugin + " v" + $version),
+                  color: 5814783,
+                  fields: [
+                    { name: "📋 Release", value: $page, inline: true }
+                  ],
+                  footer: { text: "Released via GitHub Actions" },
+                  timestamp: (now | strftime("%Y-%m-%dT%H:%M:%S.000Z"))
+                }
+              ]
+            }' > payload.json
+
+          curl -f -X POST -H "Content-Type: application/json" --data @payload.json "$DISCORD_WEBHOOK"
+          echo "Discord notification sent"
+
   validate:
     runs-on: ubuntu-latest
 
