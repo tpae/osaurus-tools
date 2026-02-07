@@ -59,6 +59,22 @@
           }
         }
       ]
+    },
+    {
+      "version": "1.0.5",
+      "release_date": "2026-02-07",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/dinoki-ai/osaurus-messages/releases/download/1.0.5/osaurus.messages-1.0.5-macos-arm64.zip",
+          "sha256": "0a16f75d6a99b0edf83b1108d7a72787685a9ec0391f9ba80a34c0e98bbc8b7c",
+          "min_macos": "13.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWTBzaXEFjz7BP1c6Lu0mVX4ta1BdWmRnEa59zrbrIYxeF38soG1Uvvi0q3yY0CtV5bqIojF/NrAxIj9N5cVGPNhiw3E3hDwAgY=\ntrusted comment: timestamp:1770476196\tfile:osaurus.messages-1.0.5-macos-arm64.zip\n2WYyN8SAF859jnF6FDWqKORXv7qoC+air+UgqJCEewZiTykv/DYZV6ZByzcg8r5OS6q+4VEBcfSJwHoADKVeCQ=="
+          }
+        }
+      ]
     }
   ]
 }
