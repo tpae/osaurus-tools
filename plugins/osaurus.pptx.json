@@ -55,6 +55,12 @@
         "name": "save_presentation",
         "description": "Save a presentation as a .pptx file to the workspace."
       }
+    ],
+    "skills": [
+      {
+        "name": "osaurus-pptx",
+        "description": "Create PowerPoint (.pptx) presentations from scratch using the Osaurus PPTX plugin. Use when the user asks to build, generate, or create a PowerPoint presentation, slide deck, or .pptx file."
+      }
     ]
   },
   "public_keys": {
@@ -93,6 +99,22 @@
           "min_macos": "15.0",
           "minisign": {
             "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6ViWzAzbIwQZw56JWBXc16YY8gNuG7TjHWQsON9O7RF099FarvaDCpDO4RQBZ8x8YRGbxbh7WwUASMEGET8H4bFgg=\ntrusted comment: timestamp:1770643724\tfile:osaurus.pptx-1.0.1-macos-arm64.zip\nsiIPoHS/UYNF7YnKF1LIsdbn6BMMyvmsLYTBOiVdFbrgUZaqSf9SB8TZ+5wCwF6E+MpyJn/uYmqUGShLinz+Bw=="
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.0.2",
+      "release_date": "2026-02-09",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/dinoki-ai/osaurus-pptx/releases/download/1.0.2/osaurus.pptx-1.0.2-macos-arm64.zip",
+          "sha256": "ca39ab3923a9df33bf81d9f870eb0d12dd06fac739cc5f622dfa85c532a68b1a",
+          "min_macos": "15.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6ViUSowUsJ8zuoyuNJDF0qj4sKQrcerfqARr6lCCuEDqS2U6vOKRVJRF65AMBgKP7Zm0Pb9X98TMH4GJlM45zM+wA=\ntrusted comment: timestamp:1770644954\tfile:osaurus.pptx-1.0.2-macos-arm64.zip\n6lhV8Jl9hGzTc+RsWPrYkft3FkoPNgOKwVu1Rz9gustSwE78IILGCV9rCvYfFas7muBzYKWtB7VprugvxdpdDw=="
           }
         }
       ]
