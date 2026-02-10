@@ -25,7 +25,8 @@
         "name": "open_event",
         "description": "Open a specific calendar event in the Calendar app"
       }
-    ]
+    ],
+    "skills": null
   },
   "public_keys": {
     "minisign": "RWSAW6A8VcBx/qiH6lnReSCbTsEoqRsuUhuJxgUwSS/5kpIMPd05Uvwj"
@@ -76,6 +77,22 @@
           "min_macos": "13.0",
           "minisign": {
             "signature": "untrusted comment: signature from minisign secret key\nRWSAW6A8VcBx/oualkKcZl/MMax5Ukc4Tk1jVxt2pObRw0/t3JoDlOPFUq3CkHwHvE8WVzulK95c/SiKk5vmFG5c7Kwi/rEx5A0=\ntrusted comment: timestamp:1769500236\tfile:osaurus.calendar-1.0.6-macos-arm64.zip\nAfYMKSkckMr7n1Um6iGnT+xeAvLGnaMvEFclJYGqWeqDlqShVyaR1r3o8XgCLKempis+pB7m6zb2d/Rp8HKSAg=="
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.0.7",
+      "release_date": "2026-02-10",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/dinoki-ai/osaurus-calendar/releases/download/1.0.7/osaurus.calendar-1.0.7-macos-arm64.zip",
+          "sha256": "509feb9f12176e51bf17d0e7cc3ad34093d4be65a6e8907b070564fbb61e5f1f",
+          "min_macos": "13.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWSAW6A8VcBx/tmf4yGpHWTzwLwu+6fTU6hww+l1DKllqGSFyi5+Z7qonYKLoCtvC3lroJEOwIAkEQx4HLBY6+eos4tJWpRO0Qw=\ntrusted comment: timestamp:1770767003\tfile:osaurus.calendar-1.0.7-macos-arm64.zip\n4OKfdmoTUUSBLHQLoAFwMGpf0R4Myq9c8uyaPBm4cnqyiOHJnFSHtX/GYojAh/bQ8qO93Jl1rIOsWQOJZijeBQ=="
           }
         }
       ]
