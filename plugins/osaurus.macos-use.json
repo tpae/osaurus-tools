@@ -133,6 +133,22 @@
           }
         }
       ]
+    },
+    {
+      "version": "1.2.1",
+      "release_date": "2026-02-12",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/dinoki-ai/osaurus-macos-use/releases/download/1.2.1/osaurus.macos-use-1.2.1-macos-arm64.zip",
+          "sha256": "68f95a0cacde041bf42d287e76db0e462668954a07966f7dffc2820a15fbcd51",
+          "min_macos": "13.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWRh6pAWTUF1v0h9VVtSDqa+bPRU2ZrmJImN4fsugkkV4oEsc88UPQN+6acT7SAM+QArmKJlqkAV9zhcnXChgKhbzPzkicwCzQM=\ntrusted comment: timestamp:1770920809\tfile:osaurus.macos-use-1.2.1-macos-arm64.zip\nt7iYaa1G2w2BhEnauj1vvTWG3O7eqXXfF5ENSe9FNxq53ttmCoXpxDW0hliPi3zmGw9xzrajQ9iWIm9nw1urAQ=="
+          }
+        }
+      ]
     }
   ]
 }
