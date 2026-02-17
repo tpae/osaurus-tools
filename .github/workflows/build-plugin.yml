@@ -194,10 +194,15 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: false
 
-      - name: Save artifact URL
+      - name: Save artifact URL and skill content
         run: |
           ARTIFACT_URL="${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/${{ steps.package.outputs.artifact }}"
           echo -n "$ARTIFACT_URL" > build-data/artifact_url.txt
+
+          # Copy SKILL.md content to build-data for registry embedding
+          if [ -f "SKILL.md" ]; then
+            cp "SKILL.md" build-data/SKILL.md
+          fi
 
       - name: Upload build data
         uses: actions/upload-artifact@v4
@@ -241,6 +246,12 @@ jobs:
             SKILLS=$(cat build-data/skills.json)
           fi
 
+          # Read full SKILL.md content for embedding
+          SKILL_CONTENT=""
+          if [ -f "build-data/SKILL.md" ]; then
+            SKILL_CONTENT=$(cat "build-data/SKILL.md")
+          fi
+
           if [ -z "$NAME" ]; then
             NAME=$(echo "$PLUGIN_ID" | rev | cut -d. -f1 | rev)
             NAME="$(tr '[:lower:]' '[:upper:]' <<< ${NAME:0:1})${NAME:1}"
@@ -269,7 +280,8 @@ jobs:
             --arg url "$ARTIFACT_URL" \
             --arg sha256 "${{ needs.build.outputs.sha256 }}" \
             --arg signature "$SIGNATURE" \
-            '{
+            --arg skill "$SKILL_CONTENT" \
+            '({
               plugin_id: $plugin_id,
               name: $name,
               description: $description,
@@ -291,7 +303,7 @@ jobs:
                   minisign: { signature: $signature }
                 }]
               }]
-            }' > registry-manifest.json
+            } + if ($skill | length) > 0 then { skill: $skill } else {} end)' > registry-manifest.json
 
           cat registry-manifest.json | jq .
 
@@ -330,10 +342,14 @@ jobs:
           mkdir -p plugins
 
           if [ -f "$MANIFEST_PATH" ]; then
-            # Update tools and skills from manifest and prepend new version to versions array
-            jq --slurpfile new "$GITHUB_WORKSPACE/registry-manifest.json" \
-              '.capabilities.tools = $new[0].capabilities.tools | .capabilities.skills = $new[0].capabilities.skills | .versions = [$new[0].versions[0]] + .versions | .versions |= unique_by(.version)' \
-              "$MANIFEST_PATH" > tmp.json && mv tmp.json "$MANIFEST_PATH"
+            # Update capabilities, skill content, and prepend new version to versions array
+            jq --slurpfile new "$GITHUB_WORKSPACE/registry-manifest.json" '
+              .capabilities.tools = $new[0].capabilities.tools |
+              if ($new[0].capabilities | has("skills")) then .capabilities.skills = $new[0].capabilities.skills else . end |
+              if ($new[0] | has("skill")) then .skill = $new[0].skill else . end |
+              .versions = [$new[0].versions[0]] + .versions |
+              .versions |= unique_by(.version)
+            ' "$MANIFEST_PATH" > tmp.json && mv tmp.json "$MANIFEST_PATH"
           else
             cp "$GITHUB_WORKSPACE/registry-manifest.json" "$MANIFEST_PATH"
           fi
