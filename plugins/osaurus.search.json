@@ -2,11 +2,9 @@
   "plugin_id": "osaurus.search",
   "name": "Osaurus Search",
   "description": "Web search using DuckDuckGo (no API key required)",
-  "homepage": "https://github.com/dinoki-ai/osaurus-tools",
+  "homepage": "https://github.com/osaurus-ai/osaurus-tools",
   "license": "MIT",
-  "authors": [
-    "Osaurus Team"
-  ],
+  "authors": ["Osaurus Team"],
   "capabilities": {
     "tools": [
       {
@@ -31,7 +29,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/search-1.0.4/osaurus.search-1.0.4.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/search-1.0.4/osaurus.search-1.0.4.zip",
           "sha256": "5a7e412cb579d610adcbea207519e44952c42b41962cd771eb0fb2752ccad073",
           "size": 68933,
           "minisign": {
@@ -47,7 +45,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/search-1.0.3/osaurus.search-1.0.3.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/search-1.0.3/osaurus.search-1.0.3.zip",
           "sha256": "247f273c0d7b8aed799f683c44882b29efec95ade9365e8c48ab149569f4630c",
           "size": 63764,
           "minisign": {
@@ -63,7 +61,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/search-1.0.2/osaurus.search-1.0.2.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/search-1.0.2/osaurus.search-1.0.2.zip",
           "sha256": "c1a64dd3542146b70d3ba5a975a50816feda60e591f6c806d8ae2a4139f655e7",
           "size": 63399,
           "minisign": {
@@ -79,7 +77,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/search-1.0.1/osaurus.search-1.0.1.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/search-1.0.1/osaurus.search-1.0.1.zip",
           "sha256": "c5537f8fb6af8cb6f9fd52aeab72307311f6dd93b96ef90ae1d6337e2589f61e",
           "size": 46897,
           "minisign": {
@@ -95,7 +93,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/search-1.0.0/osaurus.search-1.0.0.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/search-1.0.0/osaurus.search-1.0.0.zip",
           "sha256": "90fd642606c09d3ae6a62ee4c49aa823de73ad6dc2598df011ea5ef31dc49ba4",
           "size": 38971,
           "minisign": {

@@ -2,11 +2,9 @@
   "plugin_id": "osaurus.contacts",
   "name": "Contacts",
   "description": "Interact with macOS Contacts.app - get phone numbers, find contacts by name or phone",
-  "homepage": "https://github.com/dinoki-ai/osaurus-contacts",
+  "homepage": "https://github.com/osaurus-ai/osaurus-contacts",
   "license": "MIT",
-  "authors": [
-    "dinoki-ai"
-  ],
+  "authors": ["osaurus-ai"],
   "capabilities": {
     "tools": [
       {
@@ -35,7 +33,7 @@
           "os": "macos",
           "arch": "arm64",
           "min_macos": "13.0",
-          "url": "https://github.com/dinoki-ai/osaurus-contacts/releases/download/1.0.1/osaurus.contacts-1.0.1.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-contacts/releases/download/1.0.1/osaurus.contacts-1.0.1.zip",
           "sha256": "9ca5f05a35b9723ff5226f8839b71eadc99e94fd31bd20a12bac3ad8dff582b5",
           "size": 45960,
           "minisign": {
@@ -51,7 +49,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-contacts/releases/download/1.0.2/osaurus.contacts-1.0.2-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-contacts/releases/download/1.0.2/osaurus.contacts-1.0.2-macos-arm64.zip",
           "sha256": "b5310b8803a898f7c1120d29e952762fbfdd359266d914e5182c39215a0b6df2",
           "min_macos": "13.0",
           "minisign": {

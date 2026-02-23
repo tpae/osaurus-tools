@@ -2,11 +2,9 @@
   "plugin_id": "osaurus.messages",
   "name": "Messages",
   "description": "Interact with macOS Messages.app - send and read iMessages",
-  "homepage": "https://github.com/dinoki-ai/osaurus-messages",
+  "homepage": "https://github.com/osaurus-ai/osaurus-messages",
   "license": "MIT",
-  "authors": [
-    "dinoki-ai"
-  ],
+  "authors": ["osaurus-ai"],
   "capabilities": {
     "tools": [
       {
@@ -35,7 +33,7 @@
           "os": "macos",
           "arch": "arm64",
           "min_macos": "13.0",
-          "url": "https://github.com/dinoki-ai/osaurus-messages/releases/download/1.0.3/osaurus.messages-1.0.3.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-messages/releases/download/1.0.3/osaurus.messages-1.0.3.zip",
           "sha256": "8a61ce939b28ca3102469a976353cc08e985fb1e7ba05aafa4be26161ddedb21",
           "size": 41141,
           "minisign": {
@@ -51,7 +49,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-messages/releases/download/1.0.4/osaurus.messages-1.0.4-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-messages/releases/download/1.0.4/osaurus.messages-1.0.4-macos-arm64.zip",
           "sha256": "33ff9e6d6ec6cfdc62563c43345717159108cce7496df1c2c5572b96c352c2ea",
           "min_macos": "13.0",
           "minisign": {
@@ -67,7 +65,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-messages/releases/download/1.0.5/osaurus.messages-1.0.5-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-messages/releases/download/1.0.5/osaurus.messages-1.0.5-macos-arm64.zip",
           "sha256": "0a16f75d6a99b0edf83b1108d7a72787685a9ec0391f9ba80a34c0e98bbc8b7c",
           "min_macos": "13.0",
           "minisign": {

@@ -2,7 +2,7 @@
   "plugin_id": "osaurus.pptx",
   "name": "Osaurus PPTX",
   "description": "Create, modify, and export PowerPoint presentations. Supports text, images, shapes, tables, charts, themes, and more.",
-  "homepage": "https://github.com/dinoki-ai/osaurus-pptx",
+  "homepage": "https://github.com/osaurus-ai/osaurus-pptx",
   "license": "MIT",
   "authors": [],
   "capabilities": {
@@ -78,7 +78,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-pptx/releases/download/1.0.0/osaurus.pptx-1.0.0-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-pptx/releases/download/1.0.0/osaurus.pptx-1.0.0-macos-arm64.zip",
           "sha256": "d7554c038203e496533ebe7565e7e2758d7d9eccb1f62f2490631c71891fd0cf",
           "min_macos": "15.0",
           "minisign": {
@@ -94,7 +94,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-pptx/releases/download/1.0.1/osaurus.pptx-1.0.1-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-pptx/releases/download/1.0.1/osaurus.pptx-1.0.1-macos-arm64.zip",
           "sha256": "93a11ff92eb5981882be78dd30a4ae37af2ca850b3f83ef402fb14c231e27d4e",
           "min_macos": "15.0",
           "minisign": {
@@ -110,7 +110,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-pptx/releases/download/1.0.2/osaurus.pptx-1.0.2-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-pptx/releases/download/1.0.2/osaurus.pptx-1.0.2-macos-arm64.zip",
           "sha256": "ca39ab3923a9df33bf81d9f870eb0d12dd06fac739cc5f622dfa85c532a68b1a",
           "min_macos": "15.0",
           "minisign": {
@@ -126,7 +126,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-pptx/releases/download/1.0.3/osaurus.pptx-1.0.3-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-pptx/releases/download/1.0.3/osaurus.pptx-1.0.3-macos-arm64.zip",
           "sha256": "b946172d4043177c9c86a79883900c284093cfce607b58329dd8d84f15e5c25e",
           "min_macos": "15.0",
           "minisign": {

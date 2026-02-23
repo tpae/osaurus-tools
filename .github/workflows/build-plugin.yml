@@ -17,15 +17,15 @@ on:
   workflow_call:
     inputs:
       swift_version:
-        description: 'Swift version'
+        description: "Swift version"
         required: false
         type: string
-        default: '6.0'
+        default: "6.0"
       macos_version:
-        description: 'macOS runner'
+        description: "macOS runner"
         required: false
         type: string
-        default: 'macos-15'
+        default: "macos-15"
     secrets:
       DEVELOPER_ID_CERTIFICATE_P12_BASE64:
         required: true
@@ -325,13 +325,13 @@ jobs:
           OWNER="${{ github.repository_owner }}"
           BRANCH="plugin/${PLUGIN_ID}-${VERSION}"
 
-          gh repo fork dinoki-ai/osaurus-tools --clone=false || true
+          gh repo fork osaurus-ai/osaurus-tools --clone=false || true
           sleep 3
 
           git clone "https://x-access-token:${GH_TOKEN}@github.com/${OWNER}/osaurus-tools.git" /tmp/registry
           cd /tmp/registry
 
-          git remote add upstream https://github.com/dinoki-ai/osaurus-tools.git
+          git remote add upstream https://github.com/osaurus-ai/osaurus-tools.git
           git fetch upstream
           git checkout -B master upstream/master
           git push origin master --force
@@ -370,7 +370,7 @@ jobs:
             > /tmp/pr-body.md
 
           gh pr create \
-            --repo dinoki-ai/osaurus-tools \
+            --repo osaurus-ai/osaurus-tools \
             --head "${OWNER}:${BRANCH}" \
             --title "Add ${PLUGIN_ID} v${VERSION}" \
             --body-file /tmp/pr-body.md

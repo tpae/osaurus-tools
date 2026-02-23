@@ -2,11 +2,9 @@
   "plugin_id": "osaurus.emacs",
   "name": "Emacs",
   "description": "Execute Emacs Lisp code in a running Emacs instance via emacsclient",
-  "homepage": "https://github.com/dinoki-ai/osaurus-emacs",
+  "homepage": "https://github.com/osaurus-ai/osaurus-emacs",
   "license": "MIT",
-  "authors": [
-    "dinoki-ai"
-  ],
+  "authors": ["osaurus-ai"],
   "capabilities": {
     "tools": [
       {
@@ -27,7 +25,7 @@
           "os": "macos",
           "arch": "arm64",
           "min_macos": "13.0",
-          "url": "https://github.com/dinoki-ai/osaurus-emacs/releases/download/1.0.1/osaurus.emacs-1.0.1.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-emacs/releases/download/1.0.1/osaurus.emacs-1.0.1.zip",
           "sha256": "09b3d5328a7e7f6e8664196f0dec1a986dc10fefff32fafdb77b84255da6d202",
           "size": 21304,
           "minisign": {
@@ -43,7 +41,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-emacs/releases/download/1.0.2/osaurus.emacs-1.0.2-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-emacs/releases/download/1.0.2/osaurus.emacs-1.0.2-macos-arm64.zip",
           "sha256": "ff0722f504969efda550b9ddca6e37966f9cbbb222c3c7d8a9ab947d1fb8261b",
           "min_macos": "13.0",
           "minisign": {

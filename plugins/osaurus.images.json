@@ -2,7 +2,7 @@
   "plugin_id": "osaurus.images",
   "name": "Osaurus Images",
   "description": "Image manipulation, conversion, and optimization tools",
-  "homepage": "https://github.com/dinoki-ai/osaurus-images",
+  "homepage": "https://github.com/osaurus-ai/osaurus-images",
   "license": "MIT",
   "authors": [],
   "capabilities": {
@@ -84,7 +84,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-images/releases/download/1.0.0/osaurus.images-1.0.0-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-images/releases/download/1.0.0/osaurus.images-1.0.0-macos-arm64.zip",
           "sha256": "cc4ac868b7425bbf0d764a1d1f2634c9ca314b1c502b5612e172ffa263e07942",
           "min_macos": "15.0",
           "minisign": {
@@ -100,7 +100,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-images/releases/download/1.0.1/osaurus.images-1.0.1-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-images/releases/download/1.0.1/osaurus.images-1.0.1-macos-arm64.zip",
           "sha256": "7e539c1c24057e17c9cdd8a95114a6b446b8236f98121a1844c5015c6642ede6",
           "min_macos": "15.0",
           "minisign": {
@@ -116,7 +116,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-images/releases/download/1.0.2/osaurus.images-1.0.2-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-images/releases/download/1.0.2/osaurus.images-1.0.2-macos-arm64.zip",
           "sha256": "10e5ea9dbc1133633a4e435a184e73f8efcdedb68924f9772846aca0f4736a64",
           "min_macos": "15.0",
           "minisign": {
@@ -132,7 +132,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-images/releases/download/1.0.3/osaurus.images-1.0.3-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-images/releases/download/1.0.3/osaurus.images-1.0.3-macos-arm64.zip",
           "sha256": "815c1d3a9cdaf7afe89458a8f85224bc05f3161951b3c5921e978d86ec0d5d82",
           "min_macos": "15.0",
           "minisign": {

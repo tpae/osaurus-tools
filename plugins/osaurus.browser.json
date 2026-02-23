@@ -2,11 +2,9 @@
   "plugin_id": "osaurus.browser",
   "name": "Osaurus Browser",
   "description": "Agent-friendly headless browser with ref-based interactions. Navigate to pages, get a snapshot of interactive elements, then interact using element refs.",
-  "homepage": "https://github.com/dinoki-ai/osaurus-tools",
+  "homepage": "https://github.com/osaurus-ai/osaurus-tools",
   "license": "MIT",
-  "authors": [
-    "Osaurus Team"
-  ],
+  "authors": ["Osaurus Team"],
   "capabilities": {
     "tools": [
       {
@@ -63,7 +61,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/browser-1.0.0/osaurus.browser-1.0.0.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/browser-1.0.0/osaurus.browser-1.0.0.zip",
           "sha256": "888e3599bbc7b6e0264f9e5d798ecb173f3a0340a2c0f034715362992acc0b6a",
           "size": 60168,
           "minisign": {
@@ -79,7 +77,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/browser-1.0.1/osaurus.browser-1.0.1.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/browser-1.0.1/osaurus.browser-1.0.1.zip",
           "sha256": "0a76a25dea748924d42bad3f0bccb63d2a72c3dbf2dbe51f048003ec19122c29",
           "size": 60914,
           "minisign": {
@@ -95,7 +93,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/browser-1.0.2/osaurus.browser-1.0.2.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/browser-1.0.2/osaurus.browser-1.0.2.zip",
           "sha256": "848778421c0a12c57a33cba2ebef0e691aa7d943063d40097b1afb4fc7193adf",
           "size": 66161,
           "minisign": {
@@ -111,7 +109,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/browser-1.1.0/osaurus.browser-1.1.0.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/browser-1.1.0/osaurus.browser-1.1.0.zip",
           "sha256": "d66addfabd384c6b2d26738c100de4032d74b0ddd8a83429e9cb5487b46a05eb",
           "size": 84678,
           "minisign": {
@@ -127,7 +125,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/browser-1.1.1/osaurus.browser-1.1.1-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/browser-1.1.1/osaurus.browser-1.1.1-macos-arm64.zip",
           "sha256": "29a0fabffa0b75eff7d5539b3f24b438e9f465871325b34f84f6571649ada14e",
           "size": 89187,
           "min_macos": "13.0",

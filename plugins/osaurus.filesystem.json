@@ -2,11 +2,9 @@
   "plugin_id": "osaurus.filesystem",
   "name": "Osaurus Filesystem",
   "description": "Secure file system operations for reading, writing, and managing files and directories",
-  "homepage": "https://github.com/dinoki-ai/osaurus-tools",
+  "homepage": "https://github.com/osaurus-ai/osaurus-tools",
   "license": "MIT",
-  "authors": [
-    "Osaurus Team"
-  ],
+  "authors": ["Osaurus Team"],
   "capabilities": {
     "tools": [
       {
@@ -51,7 +49,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/filesystem-1.0.3/osaurus.filesystem-1.0.3.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/filesystem-1.0.3/osaurus.filesystem-1.0.3.zip",
           "sha256": "1d08993cddd2f8c37c41a074dbcf3f377ff16d07bf764374b1d3743b57a907b8",
           "size": 57431,
           "minisign": {
@@ -67,7 +65,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/filesystem-1.0.2/osaurus.filesystem-1.0.2.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/filesystem-1.0.2/osaurus.filesystem-1.0.2.zip",
           "sha256": "f807bf18ce201457e53f489aea8406dc8916c0e86490debba94b8c13cbb4c60f",
           "size": 58479,
           "minisign": {
@@ -83,7 +81,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/filesystem-1.0.1/osaurus.filesystem-1.0.1.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/filesystem-1.0.1/osaurus.filesystem-1.0.1.zip",
           "sha256": "74ae827b359cc6d1e0a0c604579379b40b5d088f9f9ca56a7d27acb197a62a2b",
           "size": 53372,
           "minisign": {
@@ -99,7 +97,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/filesystem-1.0.0/osaurus.filesystem-1.0.0.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/filesystem-1.0.0/osaurus.filesystem-1.0.0.zip",
           "sha256": "3e3873e2ca48231c761977d87acc45e0646391dfb889992e784e6977d2b992b6",
           "size": 52858,
           "minisign": {

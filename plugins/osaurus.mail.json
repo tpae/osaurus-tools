@@ -2,7 +2,7 @@
   "plugin_id": "osaurus.mail",
   "name": "Osaurus Mail",
   "description": "Read, search, compose, and manage Apple Mail — locally and privately",
-  "homepage": "https://github.com/dinoki-ai/osaurus-mail",
+  "homepage": "https://github.com/osaurus-ai/osaurus-mail",
   "license": "MIT",
   "authors": [],
   "capabilities": {
@@ -66,7 +66,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-mail/releases/download/1.0.0/osaurus.mail-1.0.0-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-mail/releases/download/1.0.0/osaurus.mail-1.0.0-macos-arm64.zip",
           "sha256": "3949aa36c1675b9e2cd9d461a7e475b301a05f2dc9a7d7ef95b720f3735eaf09",
           "min_macos": "15.0",
           "minisign": {

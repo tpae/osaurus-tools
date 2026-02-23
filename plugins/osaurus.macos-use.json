@@ -2,11 +2,9 @@
   "plugin_id": "osaurus.macos-use",
   "name": "macOS Use",
   "description": "Efficient macOS automation via accessibility APIs - element-based interactions, smart filtering, and decoupled actions/observations for minimal context usage",
-  "homepage": "https://github.com/dinoki-ai/osaurus-macos-use",
+  "homepage": "https://github.com/osaurus-ai/osaurus-macos-use",
   "license": "MIT",
-  "authors": [
-    "dinoki-ai"
-  ],
+  "authors": ["osaurus-ai"],
   "capabilities": {
     "tools": [
       {
@@ -77,7 +75,7 @@
           "os": "macos",
           "arch": "arm64",
           "min_macos": "13.0",
-          "url": "https://github.com/dinoki-ai/osaurus-macos-use/releases/download/1.1.4/osaurus.macos-use-1.1.4.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-macos-use/releases/download/1.1.4/osaurus.macos-use-1.1.4.zip",
           "sha256": "53252a26fbc59f7a22279e4a6d5ca4da35c5d296b8b3237953b0cb01e4ea1720",
           "size": 135725,
           "minisign": {
@@ -93,7 +91,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-macos-use/releases/download/1.1.5/osaurus.macos-use-1.1.5-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-macos-use/releases/download/1.1.5/osaurus.macos-use-1.1.5-macos-arm64.zip",
           "sha256": "1f216ff36258b56488a53808b656d02ddcc4d45032eb06bc77d95ac293e4df98",
           "min_macos": "13.0",
           "minisign": {
@@ -109,7 +107,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-macos-use/releases/download/1.1.6/osaurus.macos-use-1.1.6-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-macos-use/releases/download/1.1.6/osaurus.macos-use-1.1.6-macos-arm64.zip",
           "sha256": "04216ca689715fc9719d2d1d047c6cf8a72e3e7e3a40ba86e36e56b0f90a9224",
           "min_macos": "13.0",
           "minisign": {
@@ -125,7 +123,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-macos-use/releases/download/1.2.0/osaurus.macos-use-1.2.0-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-macos-use/releases/download/1.2.0/osaurus.macos-use-1.2.0-macos-arm64.zip",
           "sha256": "9bbb809e804716b229ac06100903138fd9c0fd228f5ac52b12fde287004ab7d5",
           "min_macos": "13.0",
           "minisign": {
@@ -141,7 +139,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-macos-use/releases/download/1.2.1/osaurus.macos-use-1.2.1-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-macos-use/releases/download/1.2.1/osaurus.macos-use-1.2.1-macos-arm64.zip",
           "sha256": "68f95a0cacde041bf42d287e76db0e462668954a07966f7dffc2820a15fbcd51",
           "min_macos": "13.0",
           "minisign": {

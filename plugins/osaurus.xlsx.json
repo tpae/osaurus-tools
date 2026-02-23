@@ -2,7 +2,7 @@
   "plugin_id": "osaurus.xlsx",
   "name": "Osaurus XLSX",
   "description": "Read, create, and modify Excel spreadsheet (.xlsx) files. Supports reading cell data, creating workbooks with multiple sheets, writing cells, formulas, CSV/TSV conversion, and batch modifications.",
-  "homepage": "https://github.com/dinoki-ai/osaurus-xlsx",
+  "homepage": "https://github.com/osaurus-ai/osaurus-xlsx",
   "license": "MIT",
   "authors": [],
   "capabilities": {
@@ -66,7 +66,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-xlsx/releases/download/1.0.0/osaurus.xlsx-1.0.0-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-xlsx/releases/download/1.0.0/osaurus.xlsx-1.0.0-macos-arm64.zip",
           "sha256": "a5dfd44901674591c6c451e0e42157a9abbc152dcf3e77ce9b28786db986dbb7",
           "min_macos": "15.0",
           "minisign": {
@@ -82,7 +82,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-xlsx/releases/download/1.0.1/osaurus.xlsx-1.0.1-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-xlsx/releases/download/1.0.1/osaurus.xlsx-1.0.1-macos-arm64.zip",
           "sha256": "806bf0f0e6b2a72eda3ba216abdfcee962d49dde01fe63ffae7970ca1b7bf23c",
           "min_macos": "15.0",
           "minisign": {
@@ -98,7 +98,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-xlsx/releases/download/1.0.2/osaurus.xlsx-1.0.2-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-xlsx/releases/download/1.0.2/osaurus.xlsx-1.0.2-macos-arm64.zip",
           "sha256": "802f3eef4f54a6280280ea6474d4b02de0263d1d6de84fab223fd6d7688c7d03",
           "min_macos": "15.0",
           "minisign": {
@@ -114,7 +114,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-xlsx/releases/download/1.0.3/osaurus.xlsx-1.0.3-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-xlsx/releases/download/1.0.3/osaurus.xlsx-1.0.3-macos-arm64.zip",
           "sha256": "33f7a246b621f48add8e769c89b17ba944639d5ff0200c9001706eaff2d09ec8",
           "min_macos": "15.0",
           "minisign": {
@@ -130,7 +130,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-xlsx/releases/download/1.0.4/osaurus.xlsx-1.0.4-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-xlsx/releases/download/1.0.4/osaurus.xlsx-1.0.4-macos-arm64.zip",
           "sha256": "1b3341f4f1fdc755e5c4aafc2cbb5c8f3b83a956dc827a9d0de162cf3f6ab0cb",
           "min_macos": "15.0",
           "minisign": {

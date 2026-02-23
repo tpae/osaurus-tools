@@ -2,11 +2,9 @@
   "plugin_id": "osaurus.maps",
   "name": "Maps",
   "description": "Interact with Apple Maps - search locations, get directions, and manage guides",
-  "homepage": "https://github.com/dinoki-ai/osaurus-maps",
+  "homepage": "https://github.com/osaurus-ai/osaurus-maps",
   "license": "MIT",
-  "authors": [
-    "dinoki-ai"
-  ],
+  "authors": ["osaurus-ai"],
   "capabilities": {
     "tools": [
       {
@@ -55,7 +53,7 @@
           "os": "macos",
           "arch": "arm64",
           "min_macos": "13.0",
-          "url": "https://github.com/dinoki-ai/osaurus-maps/releases/download/1.0.1/osaurus.maps-1.0.1.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-maps/releases/download/1.0.1/osaurus.maps-1.0.1.zip",
           "sha256": "e749958ca06daedf2013c7f6a0f3479f4e43af55f2d65d47a07145f187d5b414",
           "size": 90450,
           "minisign": {
@@ -71,7 +69,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-maps/releases/download/1.0.2/osaurus.maps-1.0.2-macos-arm64.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-maps/releases/download/1.0.2/osaurus.maps-1.0.2-macos-arm64.zip",
           "sha256": "11d845bf36b33a93f507486ac05d3f1c9e0d3534e0b892781f59ef8c231df794",
           "min_macos": "13.0",
           "minisign": {

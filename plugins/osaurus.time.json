@@ -2,11 +2,9 @@
   "plugin_id": "osaurus.time",
   "name": "Osaurus Time",
   "description": "Time and date utilities for Osaurus",
-  "homepage": "https://github.com/dinoki-ai/osaurus-tools",
+  "homepage": "https://github.com/osaurus-ai/osaurus-tools",
   "license": "MIT",
-  "authors": [
-    "Osaurus Team"
-  ],
+  "authors": ["Osaurus Team"],
   "capabilities": {
     "tools": [
       {
@@ -27,7 +25,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/time-1.0.3/osaurus.time-1.0.3.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/time-1.0.3/osaurus.time-1.0.3.zip",
           "sha256": "c73bef2c7fd0c0bdb1ce6f28ec19150fdf763e8c9a2060e953888ffca6e3dd65",
           "size": 21199,
           "minisign": {
@@ -43,7 +41,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/time-1.0.2/osaurus.time-1.0.2.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/time-1.0.2/osaurus.time-1.0.2.zip",
           "sha256": "e0f7f6c668e0ff36e1f1278b7983b709b4c3ea7a4e78d6670bbb9003169bc400",
           "size": 21855,
           "minisign": {
@@ -59,7 +57,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/time-1.0.1/osaurus.time-1.0.1.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/time-1.0.1/osaurus.time-1.0.1.zip",
           "sha256": "3e7bb2f5c0246ba38555cc63b484209f5b8460bf4f9e8236e57bc8788b7b6778",
           "size": 16736,
           "minisign": {
@@ -75,7 +73,7 @@
         {
           "os": "macos",
           "arch": "arm64",
-          "url": "https://github.com/dinoki-ai/osaurus-tools/releases/download/time-1.0.0/osaurus.time-1.0.0.zip",
+          "url": "https://github.com/osaurus-ai/osaurus-tools/releases/download/time-1.0.0/osaurus.time-1.0.0.zip",
           "sha256": "c05b5355c6ad049914f5b69d57fafe087be721ea914b66203e56a7806bfabd88",
           "size": 16521,
           "minisign": {

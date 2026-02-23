@@ -1,17 +1,17 @@
 # Osaurus Tools Repository
 
-Central registry for community tools and plugins for [Osaurus](https://github.com/dinoki-ai/osaurus).
+Central registry for community tools and plugins for [Osaurus](https://github.com/osaurus-ai/osaurus).
 
 ## Official System Tools
 
-| Plugin ID            | Description                            | Tools                                                                                                                                                            |
-| -------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `osaurus.time`       | Time and date utilities                | `current_time`, `format_date`                                                                                                                                    |
-| `osaurus.git`        | Git repository utilities               | `git_status`, `git_log`, `git_diff`, `git_branch`                                                                                                                |
+| Plugin ID            | Description                            | Tools                                                                                                                                                                                                                 |
+| -------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `osaurus.time`       | Time and date utilities                | `current_time`, `format_date`                                                                                                                                                                                         |
+| `osaurus.git`        | Git repository utilities               | `git_status`, `git_log`, `git_diff`, `git_branch`                                                                                                                                                                     |
 | `osaurus.browser`    | Agent-friendly headless WebKit browser | `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_select`, `browser_hover`, `browser_scroll`, `browser_press_key`, `browser_wait_for`, `browser_screenshot`, `browser_execute_script` |
-| `osaurus.fetch`      | HTTP client for web requests           | `fetch`, `fetch_json`, `fetch_html`, `download`                                                                                                                  |
-| `osaurus.search`     | Web search via DuckDuckGo              | `search`, `search_news`, `search_images`                                                                                                                         |
-| `osaurus.filesystem` | File system operations                 | `read_file`, `write_file`, `list_directory`, `create_directory`, `delete_file`, `move_file`, `search_files`, `get_file_info`                                    |
+| `osaurus.fetch`      | HTTP client for web requests           | `fetch`, `fetch_json`, `fetch_html`, `download`                                                                                                                                                                       |
+| `osaurus.search`     | Web search via DuckDuckGo              | `search`, `search_news`, `search_images`                                                                                                                                                                              |
+| `osaurus.filesystem` | File system operations                 | `read_file`, `write_file`, `list_directory`, `create_directory`, `delete_file`, `move_file`, `search_files`, `get_file_info`                                                                                          |
 
 ### Installation
 
@@ -156,17 +156,17 @@ Use the reusable workflow to automatically build, sign, release, and register yo
 
 Your plugin's `get_manifest()` function must return valid JSON with these fields:
 
-| Field                 | Required | Description                                      |
-| --------------------- | -------- | ------------------------------------------------ |
-| `plugin_id`           | Yes      | Unique identifier (e.g., `myname.weather`)       |
-| `description`         | Yes      | Brief description of what the plugin does        |
-| `capabilities.tools`  | Yes      | Array of tool definitions                        |
-| `name`                | No       | Display name (defaults to plugin_id suffix)      |
-| `license`             | No       | License identifier (defaults to `MIT`)           |
-| `authors`             | No       | Array of author names (defaults to repo owner)   |
-| `min_macos`           | No       | Minimum macOS version (defaults to `13.0`)       |
-| `min_osaurus`         | No       | Minimum Osaurus version (defaults to `0.5.0`)    |
-| `secrets`             | No       | Array of secret definitions for API keys/credentials |
+| Field                | Required | Description                                          |
+| -------------------- | -------- | ---------------------------------------------------- |
+| `plugin_id`          | Yes      | Unique identifier (e.g., `myname.weather`)           |
+| `description`        | Yes      | Brief description of what the plugin does            |
+| `capabilities.tools` | Yes      | Array of tool definitions                            |
+| `name`               | No       | Display name (defaults to plugin_id suffix)          |
+| `license`            | No       | License identifier (defaults to `MIT`)               |
+| `authors`            | No       | Array of author names (defaults to repo owner)       |
+| `min_macos`          | No       | Minimum macOS version (defaults to `13.0`)           |
+| `min_osaurus`        | No       | Minimum Osaurus version (defaults to `0.5.0`)        |
+| `secrets`            | No       | Array of secret definitions for API keys/credentials |
 
 Note: Version is extracted from the Git tag (e.g., `v1.0.0` or `1.0.0`), not from the manifest.
 
@@ -203,13 +203,13 @@ Plugins that require API keys or other credentials can declare them in the manif
 
 **Secret Specification Fields:**
 
-| Field         | Type    | Required | Description                                              |
-| ------------- | ------- | -------- | -------------------------------------------------------- |
-| `id`          | string  | Yes      | Unique identifier for the secret (e.g., `"api_key"`)     |
-| `label`       | string  | Yes      | Human-readable label shown in the UI                     |
-| `description` | string  | No       | Rich text description (supports markdown links)          |
-| `required`    | boolean | Yes      | Whether the secret is required for the plugin to function|
-| `url`         | string  | No       | URL where users can obtain the secret                    |
+| Field         | Type    | Required | Description                                               |
+| ------------- | ------- | -------- | --------------------------------------------------------- |
+| `id`          | string  | Yes      | Unique identifier for the secret (e.g., `"api_key"`)      |
+| `label`       | string  | Yes      | Human-readable label shown in the UI                      |
+| `description` | string  | No       | Rich text description (supports markdown links)           |
+| `required`    | boolean | Yes      | Whether the secret is required for the plugin to function |
+| `url`         | string  | No       | URL where users can obtain the secret                     |
 
 **Accessing Secrets in Swift:**
 
@@ -256,11 +256,11 @@ Create `.github/workflows/release.yml` in your plugin repository:
 name: Release
 on:
   push:
-    tags: ['v*', '[0-9]+.[0-9]+.[0-9]+']
+    tags: ["v*", "[0-9]+.[0-9]+.[0-9]+"]
 
 jobs:
   release:
-    uses: dinoki-ai/osaurus-tools/.github/workflows/build-plugin.yml@master
+    uses: osaurus-ai/osaurus-tools/.github/workflows/build-plugin.yml@master
     secrets: inherit
 ```
 
@@ -270,14 +270,14 @@ That's it. No inputs needed - everything is extracted from your dylib's `get_man
 
 All secrets are required for code signing and artifact verification.
 
-| Secret                              | Purpose                                        |
-| ----------------------------------- | ---------------------------------------------- |
-| `DEVELOPER_ID_CERTIFICATE_P12_BASE64` | Base64-encoded Developer ID certificate (.p12) |
-| `DEVELOPER_ID_CERTIFICATE_PASSWORD` | Password for the Apple certificate             |
-| `MINISIGN_SECRET_KEY`               | Minisign secret key for artifact signing       |
-| `MINISIGN_PASSWORD`                 | Password for the minisign key                  |
-| `MINISIGN_PUBLIC_KEY`               | Public key included in registry manifest       |
-| `REGISTRY_PAT`                      | GitHub PAT with `public_repo` scope for auto-PR|
+| Secret                                | Purpose                                         |
+| ------------------------------------- | ----------------------------------------------- |
+| `DEVELOPER_ID_CERTIFICATE_P12_BASE64` | Base64-encoded Developer ID certificate (.p12)  |
+| `DEVELOPER_ID_CERTIFICATE_PASSWORD`   | Password for the Apple certificate              |
+| `MINISIGN_SECRET_KEY`                 | Minisign secret key for artifact signing        |
+| `MINISIGN_PASSWORD`                   | Password for the minisign key                   |
+| `MINISIGN_PUBLIC_KEY`                 | Public key included in registry manifest        |
+| `REGISTRY_PAT`                        | GitHub PAT with `public_repo` scope for auto-PR |
 
 Generate minisign keys:
 
@@ -333,7 +333,7 @@ osaurus manifest extract build/time/staging/*.dylib | jq .
    └── Sources/OsaurusMytool/Plugin.swift
    ```
 
-2. Implement the plugin using the [C ABI](https://github.com/dinoki-ai/osaurus/blob/main/docs/PLUGIN_AUTHORING.md). The manifest is embedded directly in `Plugin.swift` via the `get_manifest` function. See existing tools for examples.
+2. Implement the plugin using the [C ABI](https://github.com/osaurus-ai/osaurus/blob/main/docs/PLUGIN_AUTHORING.md). The manifest is embedded directly in `Plugin.swift` via the `get_manifest` function. See existing tools for examples.
 
 3. Build and test:
 
