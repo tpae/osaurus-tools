@@ -155,6 +155,19 @@ build_tool() {
     # Copy artifacts to staging
     cp "$dylib_path" "$staging_dir/lib${product_name}.dylib"
 
+    # Include optional v2 plugin assets
+    for asset in SKILL.md README.md CHANGELOG.md; do
+        if [ -f "$tool_dir/$asset" ]; then
+            cp "$tool_dir/$asset" "$staging_dir/$asset"
+            print_success "Included $asset"
+        fi
+    done
+
+    if [ -d "$tool_dir/web" ]; then
+        cp -R "$tool_dir/web" "$staging_dir/web"
+        print_success "Included web/ directory"
+    fi
+
     # Code sign the dylib
     local dylib_file="$staging_dir/lib${product_name}.dylib"
     if [ -n "${CODESIGN_IDENTITY:-}" ]; then

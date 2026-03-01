@@ -212,13 +212,22 @@ jobs:
           # Create artifact name
           ARTIFACT="${PLUGIN_ID}-${VERSION}-macos-arm64.zip"
 
-          # Create zip with dylib and SKILL.md (if present)
+          # Create zip with dylib
           TOOL_DIR="tools/$TOOL"
-          if [ -f "$TOOL_DIR/SKILL.md" ]; then
-            zip -j "$BUILD_DIR/$ARTIFACT" "$DYLIB" "$TOOL_DIR/SKILL.md"
-            echo "Included SKILL.md in artifact"
-          else
-            zip -j "$BUILD_DIR/$ARTIFACT" "$DYLIB"
+          zip -j "$BUILD_DIR/$ARTIFACT" "$DYLIB"
+
+          # Include optional v2 plugin assets
+          for asset in SKILL.md README.md CHANGELOG.md; do
+            if [ -f "$TOOL_DIR/$asset" ]; then
+              zip -j "$BUILD_DIR/$ARTIFACT" "$TOOL_DIR/$asset"
+              echo "Included $asset in artifact"
+            fi
+          done
+
+          # Include web/ directory if present (v2 static web serving)
+          if [ -d "$TOOL_DIR/web" ]; then
+            (cd "$TOOL_DIR" && zip -r "$OLDPWD/$BUILD_DIR/$ARTIFACT" "web/")
+            echo "Included web/ directory in artifact"
           fi
 
           # Compute SHA256 and size
@@ -417,9 +426,13 @@ jobs:
           MIN_OSAURUS=$(echo "$MANIFEST" | jq -r '.min_osaurus // "0.5.0"')
           TOOLS=$(echo "$MANIFEST" | jq -c '[.capabilities.tools // [] | .[] | {name: .id, description: .description}]')
 
+          # Extract v2 routes from manifest (if present)
+          ROUTES=$(echo "$MANIFEST" | jq -c '[.capabilities.routes // [] | .[] | {name: (.id // .name), description: (.description // "")}]')
+
           # Detect SKILL.md for the tool
           TOOL="${{ steps.tag.outputs.tool }}"
-          SKILL_FILE="tools/$TOOL/SKILL.md"
+          TOOL_DIR="tools/$TOOL"
+          SKILL_FILE="$TOOL_DIR/SKILL.md"
           SKILL_CONTENT=""
           SKILLS="[]"
           if [ -f "$SKILL_FILE" ]; then
@@ -441,11 +454,34 @@ jobs:
           # Download URL for the release artifact
           DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/${ARTIFACT}"
 
-          # Build capabilities object (include skills only if present)
-          if [ "$SKILLS" = "[]" ]; then
-            CAPABILITIES=$(jq -n --argjson tools "$TOOLS" '{ tools: $tools }')
-          else
-            CAPABILITIES=$(jq -n --argjson tools "$TOOLS" --argjson skills "$SKILLS" '{ tools: $tools, skills: $skills }')
+          # Build capabilities object (include skills and routes only if present)
+          CAPABILITIES=$(jq -n --argjson tools "$TOOLS" '{ tools: $tools }')
+          if [ "$SKILLS" != "[]" ]; then
+            CAPABILITIES=$(echo "$CAPABILITIES" | jq --argjson skills "$SKILLS" '. + { skills: $skills }')
+          fi
+          if [ "$ROUTES" != "[]" ]; then
+            CAPABILITIES=$(echo "$CAPABILITIES" | jq --argjson routes "$ROUTES" '. + { routes: $routes }')
+          fi
+
+          # Build docs metadata from detected assets and manifest
+          DOCS_OBJ="{}"
+          HAS_README="false"
+          HAS_CHANGELOG="false"
+          if [ -f "$TOOL_DIR/README.md" ]; then HAS_README="true"; fi
+          if [ -f "$TOOL_DIR/CHANGELOG.md" ]; then HAS_CHANGELOG="true"; fi
+          MANIFEST_DOCS=$(echo "$MANIFEST" | jq -c '.docs // {}')
+          if [ "$HAS_README" = "true" ] || [ "$HAS_CHANGELOG" = "true" ] || [ "$MANIFEST_DOCS" != "{}" ]; then
+            DOCS_OBJ=$(jq -n '{}')
+            if [ "$HAS_README" = "true" ]; then
+              DOCS_OBJ=$(echo "$DOCS_OBJ" | jq '. + {readme: "README.md"}')
+            fi
+            if [ "$HAS_CHANGELOG" = "true" ]; then
+              DOCS_OBJ=$(echo "$DOCS_OBJ" | jq '. + {changelog: "CHANGELOG.md"}')
+            fi
+            MANIFEST_LINKS=$(echo "$MANIFEST_DOCS" | jq -c '.links // []')
+            if [ "$MANIFEST_LINKS" != "[]" ]; then
+              DOCS_OBJ=$(echo "$DOCS_OBJ" | jq --argjson links "$MANIFEST_LINKS" '. + {links: $links}')
+            fi
           fi
 
           # Build registry JSON using jq for proper escaping
@@ -467,6 +503,7 @@ jobs:
             --argjson size "$SIZE" \
             --arg signature "$SIGNATURE" \
             --arg skill "$SKILL_CONTENT" \
+            --argjson docs "$DOCS_OBJ" \
             '({
               plugin_id: $plugin_id,
               name: $name,
@@ -490,7 +527,9 @@ jobs:
                   minisign: { signature: $signature }
                 }]
               }]
-            } + if ($skill | length) > 0 then { skill: $skill } else {} end)' > /tmp/registry-manifest.json
+            }
+            + if ($skill | length) > 0 then { skill: $skill } else {} end
+            + if ($docs | length) > 0 then { docs: $docs } else {} end)' > /tmp/registry-manifest.json
 
           echo "Generated registry manifest:"
           cat /tmp/registry-manifest.json | jq .
@@ -502,11 +541,13 @@ jobs:
           REGISTRY_FILE="plugins/${PLUGIN_ID}.json"
 
           if [ -f "$REGISTRY_FILE" ]; then
-            # Merge capabilities, skill content, and prepend new version to versions array
+            # Merge capabilities (tools, skills, routes), docs, skill content, and prepend new version
             jq --slurpfile new /tmp/registry-manifest.json '
               .capabilities.tools = $new[0].capabilities.tools |
               if ($new[0].capabilities | has("skills")) then .capabilities.skills = $new[0].capabilities.skills else . end |
+              if ($new[0].capabilities | has("routes")) then .capabilities.routes = $new[0].capabilities.routes else . end |
               if ($new[0] | has("skill")) then .skill = $new[0].skill else . end |
+              if ($new[0] | has("docs")) then .docs = $new[0].docs else . end |
               .versions = [$new[0].versions[0]] + .versions |
               .versions |= unique_by(.version)
             ' "$REGISTRY_FILE" > /tmp/updated.json && mv /tmp/updated.json "$REGISTRY_FILE"

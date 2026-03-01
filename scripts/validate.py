@@ -197,6 +197,150 @@ def verify_artifact_signature(artifact, public_key, context):
         # Clean up temporary directory
         shutil.rmtree(tmpdir, ignore_errors=True)
 
+def validate_secrets(secrets, context):
+    """Validate the optional secrets array (v2)."""
+    if not isinstance(secrets, list):
+        print(f"Error in {context}: 'secrets' must be an array")
+        return False
+
+    valid = True
+    for idx, secret in enumerate(secrets):
+        sc = f"{context} -> secrets[{idx}]"
+        if not isinstance(secret, dict):
+            print(f"Error in {sc}: each secret must be an object")
+            valid = False
+            continue
+
+        for required_field in ("id", "label", "required"):
+            if required_field not in secret:
+                print(f"Error in {sc}: missing required field '{required_field}'")
+                valid = False
+
+        if "id" in secret and not isinstance(secret["id"], str):
+            print(f"Error in {sc}: 'id' must be a string")
+            valid = False
+        if "label" in secret and not isinstance(secret["label"], str):
+            print(f"Error in {sc}: 'label' must be a string")
+            valid = False
+        if "required" in secret and not isinstance(secret["required"], bool):
+            print(f"Error in {sc}: 'required' must be a boolean")
+            valid = False
+        if "description" in secret and not isinstance(secret["description"], str):
+            print(f"Error in {sc}: 'description' must be a string")
+            valid = False
+        if "url" in secret and not isinstance(secret["url"], str):
+            print(f"Error in {sc}: 'url' must be a string")
+            valid = False
+
+    return valid
+
+
+def validate_capabilities(capabilities, context):
+    """Validate the optional capabilities object including v2 fields."""
+    if not isinstance(capabilities, dict):
+        print(f"Error in {context}: 'capabilities' must be a dictionary")
+        return False
+
+    valid = True
+
+    # tools: array of {name, description}
+    if "tools" in capabilities:
+        tools = capabilities["tools"]
+        if not isinstance(tools, list):
+            print(f"Error in {context}: 'capabilities.tools' must be an array")
+            valid = False
+        else:
+            for idx, tool in enumerate(tools):
+                tc = f"{context} -> tools[{idx}]"
+                if not isinstance(tool, dict):
+                    print(f"Error in {tc}: each tool must be an object")
+                    valid = False
+
+    # skills: array of {name, description} or null
+    if "skills" in capabilities and capabilities["skills"] is not None:
+        skills = capabilities["skills"]
+        if not isinstance(skills, list):
+            print(f"Error in {context}: 'capabilities.skills' must be an array or null")
+            valid = False
+        else:
+            for idx, skill in enumerate(skills):
+                sc = f"{context} -> skills[{idx}]"
+                if not isinstance(skill, dict):
+                    print(f"Error in {sc}: each skill must be an object")
+                    valid = False
+
+    # routes (v2): array of {name, description}
+    if "routes" in capabilities and capabilities["routes"] is not None:
+        routes = capabilities["routes"]
+        if not isinstance(routes, list):
+            print(f"Error in {context}: 'capabilities.routes' must be an array or null")
+            valid = False
+        else:
+            for idx, route in enumerate(routes):
+                rc = f"{context} -> routes[{idx}]"
+                if not isinstance(route, dict):
+                    print(f"Error in {rc}: each route must be an object")
+                    valid = False
+                    continue
+                if "name" not in route:
+                    print(f"Error in {rc}: route missing 'name'")
+                    valid = False
+                if "description" not in route:
+                    print(f"Error in {rc}: route missing 'description'")
+                    valid = False
+
+    # config (v2): object (validated at runtime by host, just type-check here)
+    if "config" in capabilities and capabilities["config"] is not None:
+        if not isinstance(capabilities["config"], dict):
+            print(f"Error in {context}: 'capabilities.config' must be an object or null")
+            valid = False
+
+    # web (v2): object (validated at runtime by host, just type-check here)
+    if "web" in capabilities and capabilities["web"] is not None:
+        if not isinstance(capabilities["web"], dict):
+            print(f"Error in {context}: 'capabilities.web' must be an object or null")
+            valid = False
+
+    return valid
+
+
+def validate_docs(docs, context):
+    """Validate the optional docs object (v2)."""
+    if not isinstance(docs, dict):
+        print(f"Error in {context}: 'docs' must be a dictionary")
+        return False
+
+    valid = True
+
+    if "readme" in docs and not isinstance(docs["readme"], str):
+        print(f"Error in {context}: 'docs.readme' must be a string")
+        valid = False
+    if "changelog" in docs and not isinstance(docs["changelog"], str):
+        print(f"Error in {context}: 'docs.changelog' must be a string")
+        valid = False
+
+    if "links" in docs:
+        links = docs["links"]
+        if not isinstance(links, list):
+            print(f"Error in {context}: 'docs.links' must be an array")
+            valid = False
+        else:
+            for idx, link in enumerate(links):
+                lc = f"{context} -> links[{idx}]"
+                if not isinstance(link, dict):
+                    print(f"Error in {lc}: each link must be an object")
+                    valid = False
+                    continue
+                if "label" not in link or not isinstance(link["label"], str):
+                    print(f"Error in {lc}: link must have a string 'label'")
+                    valid = False
+                if "url" not in link or not isinstance(link["url"], str):
+                    print(f"Error in {lc}: link must have a string 'url'")
+                    valid = False
+
+    return valid
+
+
 def validate_artifact(artifact, context):
     missing = REQUIRED_ARTIFACT_LEVEL - set(artifact.keys())
     if missing:
@@ -326,6 +470,19 @@ def validate_plugin_file(filepath, seen_ids):
     # Check public key immutability (only in PR context)
     if not check_public_key_immutability(filepath, public_key):
         return False
+
+    # Validate optional v2 fields
+    if "secrets" in data:
+        if not validate_secrets(data["secrets"], filepath):
+            return False
+
+    if "capabilities" in data:
+        if not validate_capabilities(data["capabilities"], filepath):
+            return False
+
+    if "docs" in data:
+        if not validate_docs(data["docs"], filepath):
+            return False
 
     # Empty versions array is allowed for unreleased plugins
     if len(data["versions"]) == 0:

@@ -33,7 +33,24 @@ osaurus tools install osaurus.filesystem
 
 ## Plugin Specification
 
-Plugins are distributed as a `.dylib` in a zip file. The manifest is embedded in the plugin binary.
+Plugins are distributed as a `.dylib` in a zip file. The manifest is embedded in the plugin binary. Osaurus supports two ABI versions — v1 (tools only) and v2 (tools + routes + config + web + storage). See the [Plugin Authoring Guide](https://github.com/osaurus-ai/osaurus/blob/main/docs/PLUGIN_AUTHORING.md) for the full specification.
+
+### Zip Structure
+
+A plugin zip can include optional files alongside the `.dylib`:
+
+```
+mycompany.mytool-1.0.0.zip
+├── libMyTool.dylib        # Required
+├── SKILL.md               # Optional: AI skill guidance
+├── README.md              # Optional: displayed in plugin detail UI
+├── CHANGELOG.md           # Optional: displayed in Changelog tab
+└── web/                   # Optional: static frontend assets (v2)
+    ├── index.html
+    └── assets/
+```
+
+### Registry Spec Example
 
 ```json
 {
@@ -48,6 +65,25 @@ Plugins are distributed as a `.dylib` in a zip file. The manifest is embedded in
         "name": "mytool",
         "description": "Does something cool"
       }
+    ],
+    "skills": [
+      {
+        "name": "mytool-skill",
+        "description": "Guides the AI through mytool workflows"
+      }
+    ],
+    "routes": [
+      {
+        "name": "oauth_callback",
+        "description": "OAuth 2.0 callback handler"
+      }
+    ]
+  },
+  "docs": {
+    "readme": "README.md",
+    "changelog": "CHANGELOG.md",
+    "links": [
+      { "label": "Documentation", "url": "https://docs.example.com/mytool" }
     ]
   },
   "public_keys": {
@@ -89,12 +125,20 @@ Plugins are distributed as a `.dylib` in a zip file. The manifest is embedded in
 
 ### Optional Fields
 
-| Field          | Description                         |
-| -------------- | ----------------------------------- |
-| `homepage`     | Plugin homepage or repository URL   |
-| `license`      | License (e.g., "MIT", "Apache-2.0") |
-| `authors`      | List of author names                |
-| `capabilities` | Tools and capabilities description  |
+| Field                    | Description                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| `homepage`               | Plugin homepage or repository URL                                                          |
+| `license`                | License (e.g., "MIT", "Apache-2.0")                                                       |
+| `authors`                | List of author names                                                                       |
+| `capabilities`           | Tools, skills, and routes descriptions                                                     |
+| `capabilities.tools`     | Array of `{name, description}` — the tools the plugin provides                            |
+| `capabilities.skills`    | Array of `{name, description}` — AI skills bundled with the plugin                        |
+| `capabilities.routes`    | Array of `{name, description}` — HTTP routes the plugin exposes (v2)                      |
+| `docs`                   | Documentation metadata                                                                     |
+| `docs.readme`            | Path to README file in the plugin bundle                                                   |
+| `docs.changelog`         | Path to CHANGELOG file in the plugin bundle                                                |
+| `docs.links`             | Array of `{label, url}` — external documentation links                                    |
+| `secrets`                | Array of secret definitions for API keys/credentials (see [Plugin Secrets](#plugin-secrets))|
 
 ### Version Entry
 
@@ -117,6 +161,28 @@ Plugins are distributed as a `.dylib` in a zip file. The manifest is embedded in
 | `minisign`  | Yes      | Minisign signature (`signature` and `key_id`) |
 | `min_macos` | No       | Minimum macOS version (e.g., "13.0")          |
 | `size`      | No       | File size in bytes                            |
+
+## v2 Plugin Capabilities
+
+v2 extends the plugin system with HTTP routes, configuration UI, static web serving, persistent storage, and documentation. These capabilities are declared in the plugin manifest returned by `get_manifest()` and are entirely optional — a v2 plugin can use any combination of them.
+
+For the full v2 ABI specification (entry points, host API, storage, routes, config), see the [Plugin Authoring Guide](https://github.com/osaurus-ai/osaurus/blob/main/docs/PLUGIN_AUTHORING.md).
+
+### Routes
+
+v2 plugins can register HTTP route handlers for OAuth flows, webhooks, and plugin-hosted web apps. Routes are namespaced under `/plugins/<plugin_id>/` and support `none`, `verify`, or `owner` auth levels.
+
+### Configuration UI
+
+Plugins can declare a settings schema rendered natively in the Osaurus Management window. Field types include `text`, `secret`, `toggle`, `select`, `multiselect`, `number`, `readonly`, and `status`.
+
+### Static Web Serving
+
+Plugins can ship a frontend (React, Svelte, Vue, vanilla JS) as static files in a `web/` directory. Osaurus serves them directly and injects a `window.__osaurus` context object.
+
+### Storage
+
+v2 plugins have two storage tiers: a Keychain-backed config store for secrets and tokens, and a sandboxed per-plugin SQLite database for structured data. Both are accessed through host API callbacks injected at init.
 
 ## Code Signing
 
@@ -156,17 +222,21 @@ Use the reusable workflow to automatically build, sign, release, and register yo
 
 Your plugin's `get_manifest()` function must return valid JSON with these fields:
 
-| Field                | Required | Description                                          |
-| -------------------- | -------- | ---------------------------------------------------- |
-| `plugin_id`          | Yes      | Unique identifier (e.g., `myname.weather`)           |
-| `description`        | Yes      | Brief description of what the plugin does            |
-| `capabilities.tools` | Yes      | Array of tool definitions                            |
-| `name`               | No       | Display name (defaults to plugin_id suffix)          |
-| `license`            | No       | License identifier (defaults to `MIT`)               |
-| `authors`            | No       | Array of author names (defaults to repo owner)       |
-| `min_macos`          | No       | Minimum macOS version (defaults to `13.0`)           |
-| `min_osaurus`        | No       | Minimum Osaurus version (defaults to `0.5.0`)        |
-| `secrets`            | No       | Array of secret definitions for API keys/credentials |
+| Field                  | Required | Description                                                                |
+| ---------------------- | -------- | -------------------------------------------------------------------------- |
+| `plugin_id`            | Yes      | Unique identifier (e.g., `myname.weather`)                                 |
+| `description`          | Yes      | Brief description of what the plugin does                                  |
+| `capabilities.tools`   | Yes      | Array of tool definitions                                                  |
+| `name`                 | No       | Display name (defaults to plugin_id suffix)                                |
+| `license`              | No       | License identifier (defaults to `MIT`)                                     |
+| `authors`              | No       | Array of author names (defaults to repo owner)                             |
+| `min_macos`            | No       | Minimum macOS version (defaults to `13.0`)                                 |
+| `min_osaurus`          | No       | Minimum Osaurus version (defaults to `0.5.0`)                              |
+| `secrets`              | No       | Array of secret definitions for API keys/credentials                       |
+| `capabilities.routes`  | No       | Array of HTTP route definitions (v2)                                       |
+| `capabilities.config`  | No       | Configuration UI schema rendered in the Management window (v2)             |
+| `capabilities.web`     | No       | Static web serving declaration (`static_dir`, `entry`, `mount`, `auth`) (v2)|
+| `docs`                 | No       | Documentation metadata (`readme`, `changelog`, `links`) (v2)              |
 
 Note: Version is extracted from the Git tag (e.g., `v1.0.0` or `1.0.0`), not from the manifest.
 
@@ -330,10 +400,17 @@ osaurus manifest extract build/time/staging/*.dylib | jq .
    ```
    tools/mytool/
    ├── Package.swift
-   └── Sources/OsaurusMytool/Plugin.swift
+   ├── Sources/OsaurusMytool/Plugin.swift
+   ├── SKILL.md               # Optional: AI skill guidance
+   ├── README.md              # Optional: displayed in plugin detail UI
+   ├── CHANGELOG.md           # Optional: displayed in Changelog tab
+   └── web/                   # Optional: static frontend assets (v2)
    ```
 
 2. Implement the plugin using the [C ABI](https://github.com/osaurus-ai/osaurus/blob/main/docs/PLUGIN_AUTHORING.md). The manifest is embedded directly in `Plugin.swift` via the `get_manifest` function. See existing tools for examples.
+
+   - **v1 plugins** export `osaurus_plugin_entry` — sufficient for tools-only plugins.
+   - **v2 plugins** export `osaurus_plugin_entry_v2(const osr_host_api* host)` — required for routes, config, web, or storage. The v2 ABI is a superset of v1; Osaurus falls back to v1 if the v2 symbol is not found.
 
 3. Build and test:
 
@@ -341,6 +418,8 @@ osaurus manifest extract build/time/staging/*.dylib | jq .
    ./scripts/build-tool.sh mytool --version 1.0.0
    osaurus tools install ./build/mytool/osaurus.mytool-1.0.0.zip
    ```
+
+   The build script automatically includes `SKILL.md`, `README.md`, `CHANGELOG.md`, and `web/` in the zip if they exist in the tool directory.
 
 ### Releasing
 
