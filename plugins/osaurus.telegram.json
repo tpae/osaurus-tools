@@ -318,6 +318,22 @@
           }
         }
       ]
+    },
+    {
+      "version": "1.3.0",
+      "release_date": "2026-04-21",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/osaurus-ai/osaurus-telegram/releases/download/1.3.0/osaurus.telegram-1.3.0-macos-arm64.zip",
+          "sha256": "26a11161e3d0d0f84eb5ec15253fdfc0bcd4c0463610aebfdda35c91842497c0",
+          "min_macos": "15.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6ViXOmQQv9GfNYyUAZc4RbnI41yoaPsc3//A3n0Yuig0h3klp6oF/ZKlc0rI7pLLsYthZyZ6P47dCsKwa4yZAMxQI=\ntrusted comment: timestamp:1776767817\tfile:osaurus.telegram-1.3.0-macos-arm64.zip\nAdYwvWKucdYon7YVbUy2sUyJh2N8CheQBdmyyDklRq8YpgjvCWzpa1Vqr5+ByITyMCpfHacaAWvziyPNbX9FDg=="
+          }
+        }
+      ]
     }
   ],
   "docs": {
