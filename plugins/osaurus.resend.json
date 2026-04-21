@@ -78,6 +78,22 @@
           }
         }
       ]
+    },
+    {
+      "version": "1.1.0",
+      "release_date": "2026-04-21",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/osaurus-ai/osaurus-resend/releases/download/1.1.0/osaurus.resend-1.1.0-macos-arm64.zip",
+          "sha256": "61eb9e81b08bff5d343c5b12d7235092f9f3a67b81738ce2070826570c0c95cd",
+          "min_macos": "15.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6VicTXeXKUw6fcFAuyN8RMY7AVUmpcJBSvJL9j+OXD21+4HP45W4J5mXDUR2eGEB7aAHkmdcqfRGU4RFEnHe0PCQA=\ntrusted comment: timestamp:1776768662\tfile:osaurus.resend-1.1.0-macos-arm64.zip\nk3NctAoPQMANmdxwxl7qHouxc1fMo9NgQZYo1uOOIfb1Ck5SK2K2DRr/p2oyGC70oFL1qMjFjLUM+MA1hNGRCw=="
+          }
+        }
+      ]
     }
   ],
   "docs": {
