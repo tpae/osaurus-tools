@@ -36,6 +36,10 @@
       {
         "name": "health",
         "description": "Health check"
+      },
+      {
+        "name": "reset_webhook",
+        "description": "Wipe all plugin webhooks on the Resend account and re-register a single fresh webhook with the current tunnel URL."
       }
     ]
   },
@@ -91,6 +95,22 @@
           "min_macos": "15.0",
           "minisign": {
             "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6VicTXeXKUw6fcFAuyN8RMY7AVUmpcJBSvJL9j+OXD21+4HP45W4J5mXDUR2eGEB7aAHkmdcqfRGU4RFEnHe0PCQA=\ntrusted comment: timestamp:1776768662\tfile:osaurus.resend-1.1.0-macos-arm64.zip\nk3NctAoPQMANmdxwxl7qHouxc1fMo9NgQZYo1uOOIfb1Ck5SK2K2DRr/p2oyGC70oFL1qMjFjLUM+MA1hNGRCw=="
+          }
+        }
+      ]
+    },
+    {
+      "version": "1.2.0",
+      "release_date": "2026-04-21",
+      "artifacts": [
+        {
+          "os": "macos",
+          "arch": "arm64",
+          "url": "https://github.com/osaurus-ai/osaurus-resend/releases/download/1.2.0/osaurus.resend-1.2.0-macos-arm64.zip",
+          "sha256": "e66e2173d35e2387deef20a7444df504150816b011e3eca0a390584471345d26",
+          "min_macos": "15.0",
+          "minisign": {
+            "signature": "untrusted comment: signature from minisign secret key\nRWTmCafy0+6ViYSxa5QW0biv6NM1jcnSl6YYHNf5RN8EOY0fk+vlFcToxfIw0Du6BrlQsu6hMehIBrrMO7nrXjAJKpiYpmmSqgg=\ntrusted comment: timestamp:1776797017\tfile:osaurus.resend-1.2.0-macos-arm64.zip\nNWjGHqMPMCPmrw1Q7SN8ACHBfkwW+xzUNuj+N0NCTGeRPEgTBlj/794YnxA6x0Eyo4f7bj+X6yu2tb0MCLMmDw=="
           }
         }
       ]
